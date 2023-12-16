@@ -14,7 +14,6 @@ from api import API
 from config import Config
 from context import Context
 from daemon import Daemon
-from processor import Processor
 
 APP = "findMyGUI"
 CONFIG_DIR = "./"
@@ -69,11 +68,11 @@ def loadAirTags():
 
 
 class FindMyServer(BaseHTTPRequestHandler):
-    ''' Extension: ContentType, Encode, Process '''
-    contentTypeDct = {'.html': ["text/html", True, True],
-                      '.js': ["application/javascript", True, False],
-                      '.css': ["text/css", True, False],
-                      '.png': ["image/png", False, False],
+    ''' Extension: ContentType, Encode '''
+    contentTypeDct = {'.html': ["text/html", True],
+                      '.js': ["application/javascript", True],
+                      '.css': ["text/css", True],
+                      '.png': ["image/png", False],
                       }
 
     def do_GET(self):
@@ -99,9 +98,6 @@ class FindMyServer(BaseHTTPRequestHandler):
                 self.end_headers()
                 with open(file, 'r' if encode else 'rb') as f:
                     data = f.read()
-                if ct[2]:
-                    p = Processor(ctx)
-                    data = p.processText(data)
                 self.wfile.write(data.encode('UTF-8') if encode else data)
             else:
                 self.send_response(404)
@@ -119,7 +115,6 @@ if __name__ == '__main__':
             "anisettePort": ['Integer', 6969],
             "airTagDirectory": ['String', 'airtags'],
             "airTagSuffix": ['String', '.json'],
-            "templatesDirectory": ['String', 'templates'],
             "locationDatabase": ["String", "locationReports.db"],
             "sqlCreateTable": ["String", "createTables.sql"],
         },
