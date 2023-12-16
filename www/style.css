@@ -1,0 +1,13 @@
+
+
+.row {
+  display: flex;
+}
+
+.column20 {
+  flex: 20%;
+  margin-right: 20px
+}
+.column80 {
+  flex: 80%;
+}

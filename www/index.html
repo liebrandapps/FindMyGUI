@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Find My Device for DIY Airtags</title>
+        <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+        <link href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" rel="stylesheet"/>
+        <link rel="stylesheet" type="text/css" href="./style.css" />
+        <script type="text/javascript" src="./code.js"></script>
+    </head>
+    <body onload="drawMap();">
+        <div id="topMenu">
+            <p>This is an example of a simple HTML page with one paragraph.</p>
+            <button type="button" onclick="refresh();">Update location data</button><br>
+            <div id="creds" style="display:none;">
+                <label for="userName">Apple Id:</label><input type="text" id="userName" name="userName"/>
+                <label for="password">Password:</label><input type="text" id="password" name="password"/>
+                <button type="button" onclick="submitCreds();">Submit</button>
+            </div>
+            <div id="ndFactor" style="display:none;">
+                <label for="factorAuth">2nd Factor:</label><input type="text" id="factorAuth" name="factorAuth"/>
+                <button type="button" onclick="submitAuth();">Submit</button>
+            </div>
+            <div id="errMsg" style="display:none;">
+            </div>
+        </div>
+
+        </div>
+        <div id="workarea" class="row"">
+            <div id="contentList" class="column20" >
+            </div>
+            <div id="rightMap" class="column80">
+                <h3>Open Street Map</h3>
+                <div id="map">
+                </div>
+            </div>
+            <div id="rightTagEditor" class="column80" style="display:none;">
+                <h3>Tag Editor</h3>
+                <label for="tagName">(Friendly) Name of Tag:</label><br>
+                <input type="text" id="tagName" name="tagName"/><br>
+                <label for="privKey">Private Key (Base64):</label><br>
+                <input type="text" id="privKey" name="privKey"/><br>
+                <label for="advKey">Advertisement Key (Base64):</label><br>
+                <input type="text" id="advKey" name="advKey"/><br>
+                <input type="hidden" id="cmd"/>
+                <input type="hidden" id="id"/>
+                <button type="button" onclick="saveTagEdit();">Save</button>
+                <button type="button" onclick="cancelTagEdit();">Cancel</button>
+
+            </div>
+            <div id="prefixAirTag" style="display:none;">
+                <b>AirTags</b>
+                <img src="./add.png" style="height:40px; float:right" onclick="addTag();"/><br>
+                <br>
+            </div>
+            <div id="tmplAirTag" style="display:none;">
+                <br>
+                <!--img src="./bike.png" style="height:40px; margin-right:10px"-->
+                <a>##NAME## [##LASTSEEN##]</a><br>
+
+                <img src="./settings.png" style="height:40px; margin-right:3px; float:right" onclick="editTag('##ID##');">
+                <!--img src="./location.png" style="height:40px; margin-right:20px; float:right"-->
+                <br>
+            </div>
+
+
+
+    </body>
+</html>
