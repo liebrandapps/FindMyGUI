@@ -2,7 +2,7 @@ import base64
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from os.path import join
 
 
@@ -20,6 +20,7 @@ class AirTag:
         self._lastSeen = None
         self._latitude = None
         self._longitude = None
+        self._history = {}
         if jsonFile is None:
             airTagDir = ctx.cfg.general_airTagDirectory
             airTagSuffix = ctx.cfg.general_airTagSuffix
@@ -50,10 +51,19 @@ class AirTag:
             self._lastSeen = dta['lastSeen']
             self._longitude = dta['longitude']
             self._latitude = dta['latitude']
+        if 'history' in dta.keys():
+            self._history = dta['history']
         self.log.info(f"Loaded AirTag [{self._name} / {self.__id}] from file {self.fileName}")
         self._needsSave = False
 
     def save(self):
+        toRemove = []
+        cutOff = datetime.now() - timedelta(days=self.cfg.general_history)
+        for h in self._history.keys():
+            if datetime.utcfromtimestamp(h) < cutOff:
+                toRemove.append(h)
+        for r in toRemove:
+            del self._history[r]
         j = self.toJSON()
         with open(self.fileName, 'w') as f:
             print(j, file=f)
@@ -74,6 +84,7 @@ class AirTag:
                 'lastSeen': self._lastSeen,
                 'longitude': self._longitude,
                 'latitude': self._latitude,
+                'history': self._history,
                 'id': self.id}
 
     def resolveTag(self, tag):
@@ -83,7 +94,7 @@ class AirTag:
         if tag == '##ID##':
             value = self.id
         if tag == '##LASTSEEN##':
-            if self._lastSeen is None or int(self._lastSeen)==0:
+            if self._lastSeen is None or int(self._lastSeen) == 0:
                 value = "Never"
             else:
                 value = datetime.utcfromtimestamp(self._lastSeen).strftime('%H:%M:%S %d.%m.%Y')
@@ -139,4 +150,9 @@ class AirTag:
             self._longitude = longitude
             self._latitude = latitude
             self._lastSeen = when
-            self._needsSave = True
+        self._history[when] = {'lat': latitude, 'lon': longitude}
+        self._needsSave = True
+
+    @property
+    def history(self):
+        return(self._history)

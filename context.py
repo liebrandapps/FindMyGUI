@@ -3,11 +3,15 @@
   This file is part of FindMyGUI which is released under the Apache 2.0 License
   See file LICENSE or go to for full license details https://github.com/liebrandapps/FindMyGUI
 """
+import json
 import threading
 from datetime import datetime
+from os.path import exists
 
 
 class Context:
+
+    statusFile = "./findMyGUI.json"
 
     def __init__(self, cfg, log):
         self.__log = log
@@ -22,6 +26,18 @@ class Context:
         self._password = ""
         self._ndFactor = ""
         self._errMsg = ""
+        self._lastLocationUpdate = 0
+
+    def load(self):
+        if exists(Context.statusFile):
+            with open(Context.statusFile) as f:
+                dta = json.load(f)
+            self._lastLocationUpdate = dta['lastLocationUpdate']
+
+    def save(self):
+        j = { 'lastLocationUpdate': self._lastLocationUpdate}
+        with open(Context.statusFile, 'w') as f:
+            print(j, file=f)
 
     @property
     def log(self):
@@ -121,3 +137,12 @@ class Context:
     @errMsg.setter
     def errMsg(self, value):
         self._errMsg = value
+
+    @property
+    def lastLocationUpdate(self):
+        return self._lastLocationUpdate
+
+    @lastLocationUpdate.setter
+    def lastLocationUpdate(self, value):
+        self._lastLocationUpdate = value
+        self.save()

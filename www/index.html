@@ -10,7 +10,9 @@
     <body onload="drawMap();">
         <div id="topMenu">
             <p>DIY AirTag Locations</p>
-            <button type="button" onclick="refresh();">Update location data</button><br>
+            <button type="button" onclick="refresh();">Update location data</button>
+            <a id="lastLocationUpdate"></a>
+            <br>
             <div id="creds" style="display:none;">
                 <label for="userName">Apple Id:</label><input type="text" id="userName" name="userName"/>
                 <label for="password">Password:</label><input type="text" id="password" name="password"/>

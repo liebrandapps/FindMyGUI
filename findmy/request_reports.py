@@ -116,4 +116,5 @@ class FindMy:
         self.ctx.log.info(f'found:   {list(found)}')
         self.ctx.log.info(f'missing: {[key for key in names.values() if key not in found]}')
         self.ctx.signInDone = True
+        self.ctx.lastLocationUpdate = int(datetime.datetime.now().timestamp())
 

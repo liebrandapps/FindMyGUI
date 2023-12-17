@@ -34,6 +34,8 @@ class API:
             result = self._creds(params['userName'][0], params['password'][0])
         if cmd == 'auth':
             result = self._auth(params['ndFactor'][0])
+        if cmd == 'lastLocationUpdate':
+            result = self._lastLocationUpdate()
         return json.dumps(result if result is not None else {})
 
     def _listTags(self):
@@ -125,3 +127,6 @@ class API:
         self.log.debug(f"[API] Cmds' auth parameter are ndFactor={ndFactor}")
         self.ctx.ndFactor = str(ndFactor)
         return {'status': 'ok'}
+
+    def _lastLocationUpdate(self):
+        return {'lastLocationUpdate' : self.ctx.lastLocationUpdate}

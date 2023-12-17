@@ -20,7 +20,7 @@ function drawMap() {
 
     // Target's GPS coordinates.
     var target = L.latLng('47.50737', '19.04611');
-    var t2 = L.latLng('52.5062564', '13.3236131');
+    var t2 = L.latLng('51.5062564', '12.3236131');
 
     var bounds = new L.LatLngBounds([target, t2]);
 
@@ -38,9 +38,34 @@ function drawMap() {
         direction: 'right'
     }
     );
-    mapMarkers.push(m1)
-    mapMarkers.push(m2)
+    mapMarkers.push(m1);
+    mapMarkers.push(m2);
+    getLastLocationUpdate();
     listTags();
+}
+
+function getLastLocationUpdate() {
+    var url = "/api"
+    var params = { "command" : "lastLocationUpdate" };
+    var completeUrl = url + formatParams(params)
+    console.log(completeUrl)
+    var http = new XMLHttpRequest();
+    http.open('GET', completeUrl, true);
+    http.setRequestHeader('Accept', 'application/json');
+    http.send();
+    http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+            if(this.status == 200) {
+                var jsn = JSON.parse(this.responseText);
+                console.log(jsn);
+                let strDate = "never";
+                if (jsn.lastLocationUpdate > 0) {
+                    strDate = tsToDateString(jsn.lastLocationUpdate);
+                 }
+                document.getElementById("lastLocationUpdate").innerText = strDate;
+            }
+        }
+    }
 }
 
 function listTags() {
@@ -71,15 +96,7 @@ function listTags() {
                     var html = document.getElementById("tmplAirTag").innerHTML;
                     var strDate = "never"
                     if (jsn[key].lastSeen) {
-                        var date = new Date(jsn[key].lastSeen * 1000);
-                        var year = date.getFullYear()
-                        var month = "0" + date.getMonth()
-                        var day = "0" + date.getDay()
-                        var hours = date.getHours();
-                        var minutes = "0" + date.getMinutes();
-                        var seconds = "0" + date.getSeconds();
-                        strDate = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + " "
-                                day.substr(-2) + "." + month.substr(-2) + "." + year;
+                        strDate = tsToDateString(jsn[key].lastSeen)
                         var pos = L.latLng(jsn[key].latitude, jsn[key].longitude);
                         arrLatLon.push(pos)
                         var marker = L.marker(pos)
@@ -281,4 +298,16 @@ function formatParams( params ){
           return key+"="+encodeURIComponent(params[key])
         })
         .join("&")
+}
+
+function tsToDateString(ts) {
+    var date = new Date(ts * 1000);
+    console.log(date)
+    var year = date.getFullYear()
+    var month = "0" + (date.getMonth()+1)
+    var day = "0" + date.getDate()
+    var hours = "0" + date.getHours();
+    var minutes = "0" + date.getMinutes();
+    var seconds = "0" + date.getSeconds();
+    return hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + " " + day.substr(-2) + "." + month.substr(-2) + "." + year;
 }

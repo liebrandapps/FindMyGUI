@@ -50,7 +50,6 @@ def terminate(sigNo, _):
     ctx.log.info(f"[{APP}] Terminating with Signal {sigNo} {sigs[sigNo]}")
     if httpIsRunning:
         Thread(target=myServer.shutdown).start()
-    ctx.sql.doTerminate()
 
 
 def loadAirTags():
@@ -115,8 +114,7 @@ if __name__ == '__main__':
             "anisettePort": ['Integer', 6969],
             "airTagDirectory": ['String', 'airtags'],
             "airTagSuffix": ['String', '.json'],
-            "locationDatabase": ["String", "locationReports.db"],
-            "sqlCreateTable": ["String", "createTables.sql"],
+            "history": ["Integer", 30],
         },
         "logging": {
             "logFile": ["String", "/tmp/findMyGUI.log"],
@@ -128,7 +126,7 @@ if __name__ == '__main__':
         "appleId": {
             "appleId": ["String", ''],
             "password": ["String", ''],
-            "trustedDevice": ["Boolean", True],
+            "trustedDevice": ["Boolean", False],
         }
     }
     path = join(CONFIG_DIR, CONFIG_FILE)
