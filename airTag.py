@@ -60,7 +60,7 @@ class AirTag:
         toRemove = []
         cutOff = datetime.now() - timedelta(days=self.cfg.general_history)
         for h in self._history.keys():
-            if datetime.utcfromtimestamp(h) < cutOff:
+            if int(h) < cutOff.timestamp():
                 toRemove.append(h)
         for r in toRemove:
             del self._history[r]

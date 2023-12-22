@@ -174,9 +174,10 @@ function refresh() {
     http.onreadystatechange = function() {
         if(this.readyState == 4) {
             if(this.status == 200) {
-                var jsn = JSON.parse(this.responseText)
-                console.log(jsn)
-                listTags()
+                var jsn = JSON.parse(this.responseText);
+                console.log(jsn);
+                getLastLocationUpdate();
+                listTags();
             }
         }
     }
