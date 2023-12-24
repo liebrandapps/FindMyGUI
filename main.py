@@ -1,3 +1,8 @@
+"""
+  Mark Liebrand 2024
+  This file is part of FindMyGUI which is released under the Apache 2.0 License
+  See file LICENSE or go to for full license details https://github.com/liebrandapps/FindMyGUI
+"""
 import glob
 import logging
 import signal
@@ -147,6 +152,7 @@ if __name__ == '__main__':
     if log is None:
         sys.exit(-126)
     ctx = Context(cfg, log)
+    ctx.load()
 
     signal.signal(signal.SIGINT, terminate)
     signal.signal(signal.SIGTERM, terminate)

@@ -59,10 +59,27 @@ function getLastLocationUpdate() {
                 var jsn = JSON.parse(this.responseText);
                 console.log(jsn);
                 let strDate = "never";
+                let diff;
                 if (jsn.lastLocationUpdate > 0) {
                     strDate = tsToDateString(jsn.lastLocationUpdate);
+                    const now = Date.now();
+                    const elapsed = (jsn.lastLocationUpdate*1000) - now;
+                    console.log(elapsed);
+                    const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+                    if (elapsed>-60000) {
+                        diff = formatter.format(Math.round(elapsed / 1000), 'second');
+                    }
+                    else if (elapsed>-3600000) {
+                        diff = formatter.format(Math.round(elapsed / 60000), 'minute');
+                    }
+                    else if (elapsed>-86400000) {
+                        diff = formatter.format(Math.round(dielapsedff / 3600000), 'hour');
+                    }
+                    else {
+                        diff = formatter.format(Math.round(elapsed / 86400000), 'day');
+                    }
                  }
-                document.getElementById("lastLocationUpdate").innerText = strDate;
+                document.getElementById("lastLocationUpdate").innerText = strDate + " (" + diff + ")";
             }
         }
     }
@@ -162,7 +179,7 @@ function submitAuth() {
 }
 
 function refresh() {
-    document.getElementById("errMsg").style.display = "block";
+    document.getElementById("errMsg").style.display = "none";
     var url = "/api"
     var params = { "command" : "refresh" };
     var completeUrl = url + formatParams(params)

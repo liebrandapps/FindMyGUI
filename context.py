@@ -10,7 +10,6 @@ from os.path import exists
 
 
 class Context:
-
     statusFile = "./findMyGUI.json"
 
     def __init__(self, cfg, log):
@@ -35,9 +34,9 @@ class Context:
             self._lastLocationUpdate = dta['lastLocationUpdate']
 
     def save(self):
-        j = { 'lastLocationUpdate': self._lastLocationUpdate}
+        j = {"lastLocationUpdate": self._lastLocationUpdate}
         with open(Context.statusFile, 'w') as f:
-            print(j, file=f)
+            print(json.dumps(j, indent=4), file=f)
 
     @property
     def log(self):

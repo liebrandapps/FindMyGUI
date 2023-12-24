@@ -1,5 +1,12 @@
+"""
+  Mark Liebrand 2024
+  This file is part of FindMyGUI which is released under the Apache 2.0 License
+  See file LICENSE or go to for full license details https://github.com/liebrandapps/FindMyGUI
+"""
 import json
 import time
+
+import requests.exceptions
 
 from airTag import AirTag
 from findmy.request_reports import FindMy
@@ -52,7 +59,13 @@ class API:
     def _refresh(self):
         self.ctx.signInDone = False
         findMy = FindMy(self.ctx)
-        data = findMy.retrieveLocations()
+        try:
+            data = findMy.retrieveLocations()
+        except requests.exceptions.ConnectTimeout as e:
+            msg = f"[API] Anisette Server not running: {str(e)}"
+            self.ctx.errMsg = msg
+            self.ctx.log.error(msg)
+            data = {"status": "fail", "msg": msg}
         return data
 
     def _getTagData(self, id):
@@ -118,7 +131,7 @@ class API:
         return dct
 
     def _creds(self, userName, password):
-        self.log.debug(f"[API] Cmds' creds parameter are userName={userName}, password=(is set: {len(password)>0})")
+        self.log.debug(f"[API] Cmds' creds parameter are userName={userName}, password=(is set: {len(password) > 0})")
         self.ctx.userName = userName
         self.ctx.password = password
         return {'status': 'ok'}
@@ -129,4 +142,4 @@ class API:
         return {'status': 'ok'}
 
     def _lastLocationUpdate(self):
-        return {'lastLocationUpdate' : self.ctx.lastLocationUpdate}
+        return {'lastLocationUpdate': self.ctx.lastLocationUpdate}
