@@ -3,6 +3,7 @@ var layer_mapnik;
 var layer_tah;
 var layer_markers;
 var mapMarkers = [];
+var lastLocationUpdate = 0;
 
 function drawMap() {
     var element = document.getElementById('map');
@@ -58,32 +59,37 @@ function getLastLocationUpdate() {
             if(this.status == 200) {
                 var jsn = JSON.parse(this.responseText);
                 console.log(jsn);
-                let strDate = "never";
-                let diff;
-                if (jsn.lastLocationUpdate > 0) {
-                    strDate = tsToDateString(jsn.lastLocationUpdate);
-                    const now = Date.now();
-                    const elapsed = (jsn.lastLocationUpdate*1000) - now;
-                    console.log(elapsed);
-                    const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-                    if (elapsed>-60000) {
-                        diff = formatter.format(Math.round(elapsed / 1000), 'second');
-                    }
-                    else if (elapsed>-3600000) {
-                        diff = formatter.format(Math.round(elapsed / 60000), 'minute');
-                    }
-                    else if (elapsed>-86400000) {
-                        diff = formatter.format(Math.round(dielapsedff / 3600000), 'hour');
-                    }
-                    else {
-                        diff = formatter.format(Math.round(elapsed / 86400000), 'day');
-                    }
-                 }
-                document.getElementById("lastLocationUpdate").innerText = strDate + " (" + diff + ")";
+                lastLocationUpdate = jsn.lastLocationUpdate;
             }
         }
     }
 }
+
+var intervalLocUpdate = window.setInterval(function(){
+  let llU = document.getElementById("lastLocationUpdate");
+  if(lastLocationUpdate>0) {
+    const strDate = tsToDateString(lastLocationUpdate);
+    const now = Date.now();
+    const elapsed = (lastLocationUpdate*1000) - now;
+    const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    if (elapsed>-60000) {
+        diff = formatter.format(Math.round(elapsed / 1000), 'second');
+    }
+    else if (elapsed>-3600000) {
+        diff = formatter.format(Math.round(elapsed / 60000), 'minute');
+    }
+    else if (elapsed>-86400000) {
+        diff = formatter.format(Math.round(dielapsedff / 3600000), 'hour');
+    }
+    else {
+        diff = formatter.format(Math.round(elapsed / 86400000), 'day');
+    }
+    llU.innerText = strDate + " (" + diff + ")";
+  }
+  else {
+    llU.innerText = "never";
+  }
+}, 5000);
 
 function listTags() {
     var url = "/api"
@@ -320,7 +326,6 @@ function formatParams( params ){
 
 function tsToDateString(ts) {
     var date = new Date(ts * 1000);
-    console.log(date)
     var year = date.getFullYear()
     var month = "0" + (date.getMonth()+1)
     var day = "0" + date.getDate()
