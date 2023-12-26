@@ -79,7 +79,7 @@ var intervalLocUpdate = window.setInterval(function(){
         diff = formatter.format(Math.round(elapsed / 60000), 'minute');
     }
     else if (elapsed>-86400000) {
-        diff = formatter.format(Math.round(dielapsedff / 3600000), 'hour');
+        diff = formatter.format(Math.round(elapsed / 3600000), 'hour');
     }
     else {
         diff = formatter.format(Math.round(elapsed / 86400000), 'day');
