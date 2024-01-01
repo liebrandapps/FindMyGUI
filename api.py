@@ -31,10 +31,10 @@ class API:
             result = self._getTagData(params['id'][0])
         if cmd == 'editTag':
             result = self._editTag(params['id'][0], params['name'][0], params['privateKey'][0],
-                                   params['advertisementKey'][0])
+                                   params['advertisementKey'][0], params['imgId'][0])
         if cmd == 'addTag':
             result = self._addTag(params['id'][0], params['name'][0], params['privateKey'][0],
-                                  params['advertisementKey'][0])
+                                  params['advertisementKey'][0], params['imgId'][0])
         if cmd == 'signInStatus':
             result = self._signInStatus(int(params['timeStamp'][0]))
         if cmd == 'creds':
@@ -78,7 +78,7 @@ class API:
             dct = {'status': 'fail', 'msg': 'tag not found', 'id': id}
         return dct
 
-    def _editTag(self, id, name, privKey, advKey):
+    def _editTag(self, id, name, privKey, advKey, imgId):
         self.log.debug(f"[API] Cmds' editTag parameter are id={id}, name={name}, private Key={privKey}, "
                        f"advertisementKey={advKey}")
         if id in self.ctx.airtags.keys():
@@ -86,6 +86,7 @@ class API:
             tag.name = name
             tag.privateKey = privKey
             tag.advertisementKey = advKey
+            tag.imgId = imgId
             if tag.needsSave:
                 tag.save()
             dct = {'status': 'ok', 'dataChanged': str(tag.needsSave)}
@@ -93,13 +94,14 @@ class API:
             dct = {'status': 'fail', 'msg': 'tag not found', 'id': id}
         return dct
 
-    def _addTag(self, id, name, privKey, advKey):
+    def _addTag(self, id, name, privKey, advKey, imgId):
         self.log.debug(f"[API] Cmds' addTag parameter are id={id}, name={name}, private Key={privKey}, "
                        f"advertisementKey={advKey}")
         tag = AirTag(self.ctx)
         tag.name = name
         tag.privateKey = privKey
         tag.advertisementKey = advKey
+        tag.imgId = imgId
         tag.save()
         self.ctx.airtags[tag.id] = tag
         return {'status': 'ok', 'id': tag.id}

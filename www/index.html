@@ -7,7 +7,7 @@
         <link rel="stylesheet" type="text/css" href="./style.css" />
         <script type="text/javascript" src="./code.js"></script>
     </head>
-    <body onload="drawMap();">
+    <body onload="drawMap();" style="background-color:#595959">
         <div id="topMenu">
             <p>DIY AirTag Locations</p>
             <button type="button" onclick="refresh();">Update location data</button>
@@ -24,9 +24,10 @@
             </div>
             <div id="errMsg" style="display:none;">
             </div>
+            <hr>
         </div>
 
-        <div id="workarea" class="row"">
+        <div id="workarea" class="row">
             <div id="contentList" class="column20" >
             </div>
             <div id="rightMap" class="column80">
@@ -37,33 +38,60 @@
             <div id="rightTagEditor" class="column80" style="display:none;">
                 <h3>Tag Editor</h3>
                 <label for="tagName">(Friendly) Name of Tag:</label><br>
-                <input type="text" id="tagName" name="tagName"/><br>
+                <input type="text" id="tagName" name="tagName" style="margin-bottom:20px;"/><br>
                 <label for="privKey">Private Key (Base64):</label><br>
-                <input type="text" id="privKey" name="privKey"/><br>
+                <input type="text" id="privKey" name="privKey" style="margin-bottom:20px;"/><br>
                 <label for="advKey">Advertisement Key (Base64):</label><br>
-                <input type="text" id="advKey" name="advKey"/><br>
+                <input type="text" id="advKey" name="advKey" style="margin-bottom:20px;"/><br>
                 <input type="hidden" id="cmd"/>
                 <input type="hidden" id="id"/>
+                <input type="hidden" id="imgId"/>
+                <img id="airtag" src="./airtag.png" onclick="markImg('airtag');" style="width:80px;"  />
+                <img id="backpack" src="./backpack.png" onclick="markImg('backpack');" style="width:80px;"  />
+                <img id="bike" src="./bike.png" onclick="markImg('bike');" style="width:80px;"/>
+                <img id="keys" src="./keys.png" onclick="markImg('keys');" style="width:80px;"/>
+                <img id="safe" src="./safe.png" onclick="markImg('safe');" style="width:80px;"/>
+                <img id="suitcase" src="./suitcase.png" onclick="markImg('suitcase');" style="width:80px;"/>
+                <img id="tool" src="./tool.png" onclick="markImg('tool');" style="width:80px;"/>
+                <br>
                 <button type="button" onclick="saveTagEdit();">Save</button>
                 <button type="button" onclick="cancelTagEdit();">Cancel</button>
 
             </div>
-            <div id="prefixAirTag" style="display:none;">
-                <b>AirTags</b>
-                <img src="./add.png" style="height:40px; float:right" onclick="addTag();"/><br>
-                <br>
+        </div>
+        <div id="prefixAirTag" style="display:none;">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="width:80%;">
+                            <b>AirTags</b>
+                        </td>
+                        <td style="width:20%; float:right; margin-right:0px;">
+                            <img src="./add.png" style="width:30px; float:right; margin-right:0px;" onclick="addTag();"/>
+                        </td>
+                    </tr>
+                </table>
+                <hr>
             </div>
-            <div id="tmplAirTag" style="display:none;">
-                <br>
+        <div id="tmplAirTag" style="display:none; color=#F2F2F2;">
+                <table style="margin-bottom:5px; width:100%;">
+                    <tr>
+                        <td style="width:20%;">
+                            <img src="##IMGID##" style="width:40px;" onclick="editTag('##ID##');">
+                        </td>
+                        <td style="width:60%;">
+                            <span style="font-size:10pt;">##NAME##<br> </span>
+                            <span style="font-size:8pt;">[##LASTSEEN##]</span>
+                        </td>
+                        <td style="width:20%; float:right; margin-right:15px;">
+                            <img src="./settings.png" style="width:30px;" onclick="editTag('##ID##');">
+                        </td>
+                    </tr>
+                </table>
                 <!--img src="./bike.png" style="height:40px; margin-right:10px"-->
-                <a>##NAME## [##LASTSEEN##]</a><br>
 
-                <img src="./settings.png" style="height:40px; margin-right:3px; float:right" onclick="editTag('##ID##');">
                 <!--img src="./location.png" style="height:40px; margin-right:20px; float:right"-->
-                <br>
+                <hr>
             </div>
-
-
 
     </body>
 </html>

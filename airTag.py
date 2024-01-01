@@ -21,6 +21,7 @@ class AirTag:
         self._latitude = None
         self._longitude = None
         self._history = {}
+        self._imgId = "airtag"
         if jsonFile is None:
             airTagDir = ctx.cfg.general_airTagDirectory
             airTagSuffix = ctx.cfg.general_airTagSuffix
@@ -53,6 +54,8 @@ class AirTag:
             self._latitude = dta['latitude']
         if 'history' in dta.keys():
             self._history = dta['history']
+        if 'imgId' in dta.keys():
+            self._imgId = dta['imgId']
         self.log.info(f"Loaded AirTag [{self._name} / {self.__id}] from file {self.fileName}")
         self._needsSave = False
 
@@ -85,6 +88,7 @@ class AirTag:
                 'longitude': self._longitude,
                 'latitude': self._latitude,
                 'history': self._history,
+                'imgId': self._imgId,
                 'id': self.id}
 
     def resolveTag(self, tag):
@@ -155,4 +159,13 @@ class AirTag:
 
     @property
     def history(self):
-        return(self._history)
+        return self._history
+
+    @property
+    def imgId(self):
+        return self._imgId
+
+    @imgId.setter
+    def imgId(self, value):
+        self._needsSave = self._needsSave or value != self.imgId
+        self._imgId = value

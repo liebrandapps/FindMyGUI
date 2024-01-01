@@ -131,8 +131,9 @@ function listTags() {
                         mapMarkers.push(marker)
                     }
                     root.innerHTML += html.replace(/##NAME##/g, jsn[key].name).replace(/##ID##/g, jsn[key].id)
-                            .replace(/##LASTSEEN##/g, strDate);
-                })
+                            .replace(/##LASTSEEN##/g, strDate).replace(/##IMGID##/g, "./" + jsn[key].imgId + ".png");
+                });
+                root.style.color= "#f2f2f2";
                 var bounds = new L.LatLngBounds(arrLatLon);
                 map.fitBounds(bounds);
                 map.invalidateSize();
@@ -260,6 +261,12 @@ function editTag(id) {
                 document.getElementById("tagName").value = jsn.name;
                 document.getElementById("privKey").value = jsn.privateKey;
                 document.getElementById("advKey").value = jsn.advertisementKey;
+                if (jsn.hasOwnProperty("imgId")) {
+                    markImg(jsn["imgId"]);
+                }
+                else {
+                    markImg("airtag");
+                }
             }
         }
     }
@@ -277,8 +284,28 @@ function addTag() {
     document.getElementById("id").value= id
     document.getElementById("rightTagEditor").style.display = 'block';
     document.getElementById("rightMap").style.display = 'none';
+    markImg('airtag');
 }
 
+function markImg(imgName) {
+    const orgRGB = [0xff, 0xc0, 00];
+    const markRGB = [0x70, 0x30, 0xa0];
+    document.getElementById("imgId").value = imgName
+    const amountLow = -1;
+    const amountHigh = 1;
+    const imgs = ['airtag', 'backpack', 'bike', 'keys', 'suitcase', 'safe', 'tool'];
+    let src;
+    imgs.forEach(function(element) {
+        let img = document.getElementById(element);
+        if (imgName === element) {
+            src = "./" + element + "Bold.png";
+        }
+        else {
+            src = "./" + element + ".png";
+        }
+        img.src = src;
+    });
+}
 
 function saveTagEdit() {
     var fldName = document.getElementById("tagName").value;
@@ -286,8 +313,10 @@ function saveTagEdit() {
     var advKey = document.getElementById("advKey").value;
     var cmd = document.getElementById("cmd").value;
     var id = document.getElementById("id").value;
+    var imgId = document.getElementById("imgId").value;
     var url = "/api"
-    var params = { "command" : cmd, "name": fldName, "privateKey": privKey, "advertisementKey": advKey, "id": id};
+    var params = { "command" : cmd, "name": fldName, "privateKey": privKey, "advertisementKey": advKey, "id": id,
+                "imgId": imgId };
     var completeUrl = url + formatParams(params)
     console.log(completeUrl)
     var http = new XMLHttpRequest();

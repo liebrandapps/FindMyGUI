@@ -1,4 +1,8 @@
 
+body {
+    font-family: Verdana, sans-serif;
+    color: #f2f2f2;
+}
 
 .row {
   display: flex;
