@@ -244,6 +244,16 @@ function signInStatus(ts, startTime) {
     }
 }
 
+function showAbout() {
+    document.getElementById("aboutArea").style.display = 'block';
+    document.getElementById("rightMap").style.display = 'none';
+}
+
+function hideAbout() {
+    document.getElementById("aboutArea").style.display = 'none';
+    document.getElementById("rightMap").style.display = 'block';
+}
+
 function editTag(id) {
     var url = "/api"
     var params = { "command" : "getTagData", "id": id };

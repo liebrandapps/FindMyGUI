@@ -314,7 +314,8 @@ def trusted_second_factor(dsid, idms_token, ctx):
     return False
 
 
-def sms_second_factor(dsid, idms_token, anisetteUrl):
+def sms_second_factor(dsid, idms_token, ctx):
+    anisetteUrl = ctx.cfg.general_anisetteHost + ":" + str(ctx.cfg.general_anisettePort)
     identity_token = base64.b64encode((dsid + ":" + idms_token).encode()).decode()
 
     # TODO: Actually do this request to get user prompt data
@@ -347,7 +348,23 @@ def sms_second_factor(dsid, idms_token, anisetteUrl):
         timeout=5
     )
     # Prompt for the 2FA code. It's just a string like '123456', no dashes or spaces
-    code = input("Enter 2FA code: ")
+    # code = getpass("Enter 2FA code: ")
+
+    now = datetime.now()
+    ctx.signInDone = True
+    code = ""
+    ctx.requestAuth = int(now.timestamp())
+    ctx.log.info("[ICLOUD] Waiting for 2nd Factor (90 seconds from now on)")
+    interval = 30
+    while interval > 0:
+        time.sleep(3.0)
+        if len(ctx.ndFactor) > 0:
+            code = ctx.ndFactor
+            continue
+    if not code:
+        ctx.log.error("[ICLOUD] No 2nd Factor received, stopping")
+        return False
+
 
     body['securityCode'] = {'code': code}
 
@@ -360,4 +377,6 @@ def sms_second_factor(dsid, idms_token, anisetteUrl):
         timeout=5,
     )
     if resp.ok:
-        print("2FA successful")
+        ctx.log.info("2FA successful")
+        return True
+    return False

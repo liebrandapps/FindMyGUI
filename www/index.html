@@ -12,6 +12,7 @@
             <p>DIY AirTag Locations</p>
             <button type="button" onclick="refresh();">Update location data</button>
             <a id="lastLocationUpdate"></a>
+            <img src="about.png" style="float:right; width:30px" onclick="showAbout();"/>
             <br>
             <div id="creds" style="display:none;">
                 <label for="userName">Apple Id:</label><input type="text" id="userName" name="userName"/>
@@ -56,6 +57,20 @@
                 <br>
                 <button type="button" onclick="saveTagEdit();">Save</button>
                 <button type="button" onclick="cancelTagEdit();">Cancel</button>
+            </div>
+            <div id="aboutArea" class="column80" style="display:none;">
+                <a>This application allows retrieval of location information for DIY AirTags. You will
+                need an Apple ID and a working Anisette Server.</a>
+                <br>
+                <a>written by Mark Liebrand 2024</a>
+                <br>
+                Source Code:
+                <a>Map Data from OpenStreetMap</a>
+                <br>
+                <a>API to access OpenStreetMap: leaflet.js</a>
+                <br>
+
+                <button type="button" onclick="hideAbout();">Back</button>
 
             </div>
         </div>
