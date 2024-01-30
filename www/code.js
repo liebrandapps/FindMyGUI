@@ -225,7 +225,7 @@ function signInStatus(ts, startTime) {
                 if (jsn.status === "creds") {
                     document.getElementById("creds").style.display = "block";
                 }
-                if (jsn.status === "factor") {
+                if (jsn.status === "auth") {
                     document.getElementById("ndFactor").style.display = "block";
                 }
                 if (jsn.status === "fail") {
