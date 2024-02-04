@@ -35,6 +35,8 @@
                 <h3>Open Street Map</h3>
                 <div id="map">
                 </div>
+                <br>
+                <button id="back" type="button" onclick="backToNormal();" style="display:none;">Show all Tags</button>
             </div>
             <div id="rightTagEditor" class="column80" style="display:none;">
                 <h3>Tag Editor</h3>
@@ -90,21 +92,19 @@
         <div id="tmplAirTag" style="display:none; color=#F2F2F2;">
                 <table style="margin-bottom:5px; width:100%;">
                     <tr>
-                        <td style="width:20%;">
+                        <td style="width:15%;">
                             <img src="##IMGID##" style="width:40px;" onclick="editTag('##ID##');">
                         </td>
-                        <td style="width:60%;">
+                        <td style="width:55%;">
                             <span style="font-size:10pt;">##NAME##<br> </span>
                             <span style="font-size:8pt;">[##LASTSEEN##]</span>
                         </td>
-                        <td style="width:20%; float:right; margin-right:15px;">
+                        <td style="width:30%; margin-right:15px;" class="ralign">
                             <img src="./settings.png" style="width:30px;" onclick="editTag('##ID##');">
+                            <img src="./history.png" style="width:30px;" onclick="loadHistory('##ID##');">
                         </td>
                     </tr>
                 </table>
-                <!--img src="./bike.png" style="height:40px; margin-right:10px"-->
-
-                <!--img src="./location.png" style="height:40px; margin-right:20px; float:right"-->
                 <hr>
             </div>
 

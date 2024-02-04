@@ -15,3 +15,7 @@ body {
 .column80 {
   flex: 80%;
 }
+
+.ralign {
+    text-align: right;
+}

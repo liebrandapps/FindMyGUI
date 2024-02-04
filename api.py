@@ -43,6 +43,8 @@ class API:
             result = self._auth(params['ndFactor'][0])
         if cmd == 'lastLocationUpdate':
             result = self._lastLocationUpdate()
+        if cmd == 'history':
+            result = self._history(params['id'][0])
         return json.dumps(result if result is not None else {})
 
     def _listTags(self):
@@ -145,3 +147,16 @@ class API:
 
     def _lastLocationUpdate(self):
         return {'lastLocationUpdate': self.ctx.lastLocationUpdate}
+
+    def _history(self, tagId):
+        self.log.debug(f"[API] Cmds' history parameter is id={tagId}")
+        dct = {}
+        if tagId in self.ctx.airtags.keys():
+            tag = self.ctx.airtags[tagId]
+            dct['status'] = 'ok'
+            dct['history'] = tag.history
+            dct['name'] = tag.name
+        else:
+            dct['status'] = 'fail'
+            dct['msg'] = f"AirTag with id {tagId} not found."
+        return dct

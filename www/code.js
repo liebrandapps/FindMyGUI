@@ -286,6 +286,58 @@ function editTag(id) {
     document.getElementById("rightMap").style.display = 'none';
 }
 
+function loadHistory(id) {
+    var url = "/api"
+    var params = { "command" : "history", "id": id };
+    var completeUrl = url + formatParams(params)
+    console.log(completeUrl)
+    var http = new XMLHttpRequest();
+    http.open('GET', completeUrl, true);
+    http.setRequestHeader('Accept', 'application/json');
+    http.send();
+    http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+            if(this.status == 200) {
+                var jsn = JSON.parse(this.responseText);
+                console.log(jsn);
+                var element = document.getElementById('map');
+                var arrLatLon = []
+                for(var i = 0; i < mapMarkers.length; i++){
+                    map.removeLayer(mapMarkers[i]);
+                }
+                mapMarkers = []
+                Object.keys(jsn.history).forEach(function(key) {
+                    var pos = L.latLng(jsn.history[key].lat, jsn.history[key].lon);
+                    arrLatLon.push(pos)
+                })
+                var marker = L.marker(arrLatLon[0]);
+                marker.addTo(map).bindTooltip(jsn.name, {
+                            permanent: true,
+                            direction: 'right'
+                        }
+                    );
+                mapMarkers.push(marker)
+
+                var path = L.polyline(
+                    arrLatLon,
+                    {"delay":400,"dashArray":[10,20],"weight":5,"color":"black","paused":true,"reverse":false}
+                    ).addTo(map);
+                map.addLayer(path);
+                map.fitBounds(path.getBounds());
+                mapMarkers.push(path);
+                element = document.getElementById('back');
+                element.style.display = 'block';
+            }
+        }
+    }
+}
+
+function backToNormal() {
+    var element = document.getElementById('back');
+    element.style.display = 'none';
+    listTags();
+}
+
 function addTag() {
     document.getElementById("tagName").value = "";
     document.getElementById("privKey").value = "";
