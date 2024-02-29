@@ -4,6 +4,7 @@ var layer_tah;
 var layer_markers;
 var mapMarkers = [];
 var lastLocationUpdate = 0;
+var usedReports = 0;
 
 function drawMap() {
     var element = document.getElementById('map');
@@ -60,6 +61,7 @@ function getLastLocationUpdate() {
                 var jsn = JSON.parse(this.responseText);
                 console.log(jsn);
                 lastLocationUpdate = jsn.lastLocationUpdate;
+                usedReports = jsn.usedReports;
             }
         }
     }
@@ -84,7 +86,11 @@ var intervalLocUpdate = window.setInterval(function(){
     else {
         diff = formatter.format(Math.round(elapsed / 86400000), 'day');
     }
-    llU.innerText = strDate + " (" + diff + ")";
+    let rpts = "no new location data since previous update"
+    if (usedReports>0) {
+        rpts = usedReports + "update(s) since previous update"
+    }
+    llU.innerText = strDate + " [" + diff + " / " + rpts + "]";
   }
   else {
     llU.innerText = "never";
@@ -247,6 +253,7 @@ function signInStatus(ts, startTime) {
 function showAbout() {
     document.getElementById("aboutArea").style.display = 'block';
     document.getElementById("rightMap").style.display = 'none';
+    document.getElementById("rightTagEditor").style.display = 'none';
 }
 
 function hideAbout() {
@@ -284,6 +291,28 @@ function editTag(id) {
     document.getElementById("id").value= id
     document.getElementById("rightTagEditor").style.display = 'block';
     document.getElementById("rightMap").style.display = 'none';
+}
+
+function generateKeys() {
+    var url = "/api"
+    var params = { "command" : "generateKeys"};
+    var completeUrl = url + formatParams(params)
+    console.log(completeUrl)
+    var http = new XMLHttpRequest();
+    http.open('GET', completeUrl, true);
+    http.setRequestHeader('Accept', 'application/json');
+    http.send();
+    http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+            if(this.status == 200) {
+                var jsn = JSON.parse(this.responseText)
+                console.log(jsn)
+                document.getElementById("tagName").value = jsn.name;
+                document.getElementById("privKey").value = jsn.privateKey;
+                document.getElementById("advKey").value = jsn.advertisementKey;
+            }
+        }
+    }
 }
 
 function loadHistory(id) {

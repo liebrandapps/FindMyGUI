@@ -43,9 +43,11 @@
                 <label for="tagName">(Friendly) Name of Tag:</label><br>
                 <input type="text" id="tagName" name="tagName" style="margin-bottom:20px;"/><br>
                 <label for="privKey">Private Key (Base64):</label><br>
-                <input type="text" id="privKey" name="privKey" style="margin-bottom:20px;"/><br>
+                <input type="text" id="privKey" name="privKey" size="50" style="margin-bottom:20px;"/><br>
                 <label for="advKey">Advertisement Key (Base64):</label><br>
-                <input type="text" id="advKey" name="advKey" style="margin-bottom:20px;"/><br>
+                <input type="text" id="advKey" name="advKey" size="50" style="margin-bottom:20px;"/><br>
+                <button type="button" onclick="generateKeys();">Generate Keys</button>
+                <br>
                 <input type="hidden" id="cmd"/>
                 <input type="hidden" id="id"/>
                 <input type="hidden" id="imgId"/>

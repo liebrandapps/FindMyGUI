@@ -26,15 +26,18 @@ class Context:
         self._ndFactor = ""
         self._errMsg = ""
         self._lastLocationUpdate = 0
+        self._usedReports = 0
 
     def load(self):
         if exists(Context.statusFile):
             with open(Context.statusFile) as f:
                 dta = json.load(f)
             self._lastLocationUpdate = dta['lastLocationUpdate']
+            if 'usedReports' in dta:
+                self._usedReports = dta['usedReports']
 
     def save(self):
-        j = {"lastLocationUpdate": self._lastLocationUpdate}
+        j = {"lastLocationUpdate": self._lastLocationUpdate, "usedReports": self._usedReports}
         with open(Context.statusFile, 'w') as f:
             print(json.dumps(j, indent=4), file=f)
 
@@ -144,4 +147,13 @@ class Context:
     @lastLocationUpdate.setter
     def lastLocationUpdate(self, value):
         self._lastLocationUpdate = value
+        self.save()
+
+    @property
+    def usedReports(self):
+        return self._usedReports
+
+    @usedReports.setter
+    def usedReports(self, value):
+        self._usedReports = value
         self.save()

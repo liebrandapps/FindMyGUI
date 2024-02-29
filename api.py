@@ -3,10 +3,15 @@
   This file is part of FindMyGUI which is released under the Apache 2.0 License
   See file LICENSE or go to for full license details https://github.com/liebrandapps/FindMyGUI
 """
+import base64
 import json
 import time
 
+from Crypto.Random import random
+from cryptography.hazmat.backends import default_backend
+
 import requests.exceptions
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from airTag import AirTag
 from findmy.request_reports import FindMy
@@ -45,6 +50,8 @@ class API:
             result = self._lastLocationUpdate()
         if cmd == 'history':
             result = self._history(params['id'][0])
+        if cmd == 'generateKeys':
+            result = self._generateKeys()
         return json.dumps(result if result is not None else {})
 
     def _listTags(self):
@@ -146,7 +153,7 @@ class API:
         return {'status': 'ok'}
 
     def _lastLocationUpdate(self):
-        return {'lastLocationUpdate': self.ctx.lastLocationUpdate}
+        return {'lastLocationUpdate': self.ctx.lastLocationUpdate, 'usedReports': self.ctx.usedReports}
 
     def _history(self, tagId):
         self.log.debug(f"[API] Cmds' history parameter is id={tagId}")
@@ -159,4 +166,16 @@ class API:
         else:
             dct['status'] = 'fail'
             dct['msg'] = f"AirTag with id {tagId} not found."
+        return dct
+
+    def _generateKeys(self):
+        priv = random.getrandbits(224)
+        adv = ec.derive_private_key(priv, ec.SECP224R1(), default_backend()).public_key().public_numbers().x
+
+        priv_bytes = int.to_bytes(priv, 28, 'big')
+        adv_bytes = int.to_bytes(adv, 28, 'big')
+
+        priv_b64 = base64.b64encode(priv_bytes).decode("ascii")
+        adv_b64 = base64.b64encode(adv_bytes).decode("ascii")
+        dct = {'status': 'ok', 'privateKey': priv_b64, 'advertisementKey': adv_b64}
         return dct

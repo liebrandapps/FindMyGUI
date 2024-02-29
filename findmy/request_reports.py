@@ -65,17 +65,21 @@ class FindMy:
             names[hashedKey] = tag.name
 
         unixEpoch = int(datetime.datetime.now().strftime('%s'))
-        startdate = unixEpoch - (60 * 60 * 24)
+        if self.ctx.lastLocationUpdate > 0:
+            startdate = self.ctx.lastLocationUpdate
+        else:
+            startdate = unixEpoch - (60 * 60 * 48)
         data = {"search": [{"startDate": startdate * 1000, "endDate": unixEpoch * 1000, "ids": list(names.keys())}]}
 
         auth = self.getAuth(regenerate=False,
-                                   second_factor='trusted_device' if self.ctx.cfg.general_trustedDevice else 'sms')
+                            second_factor='trusted_device' if self.ctx.cfg.general_trustedDevice else 'sms')
         if auth is None:
             return
         r = requests.post("https://gateway.icloud.com/acsnservice/fetch",
-                        auth=auth,
-                        headers=generate_anisette_headers(self.ctx.cfg.general_anisetteHost+":"+str(self.ctx.cfg.general_anisettePort)),
-                        json=data)
+                          auth=auth,
+                          headers=generate_anisette_headers(
+                              self.ctx.cfg.general_anisetteHost + ":" + str(self.ctx.cfg.general_anisettePort)),
+                          json=data)
         res = json.loads(r.content.decode())['results']
         self.ctx.log.info(f'{r.status_code}: {len(res)} reports received.')
 
@@ -116,5 +120,5 @@ class FindMy:
         self.ctx.log.info(f'found:   {list(found)}')
         self.ctx.log.info(f'missing: {[key for key in names.values() if key not in found]}')
         self.ctx.signInDone = True
+        self.ctx.usedReports = len(ordered)
         self.ctx.lastLocationUpdate = int(datetime.datetime.now().timestamp())
-
