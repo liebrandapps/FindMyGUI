@@ -88,7 +88,7 @@ var intervalLocUpdate = window.setInterval(function(){
     }
     let rpts = "no new location data since previous update"
     if (usedReports>0) {
-        rpts = usedReports + "update(s) since previous update"
+        rpts = usedReports + " update(s) since previous update"
     }
     llU.innerText = strDate + " [" + diff + " / " + rpts + "]";
   }
