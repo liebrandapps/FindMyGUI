@@ -69,8 +69,6 @@ class FindMy:
             startdate = self.ctx.lastLocationUpdate
         else:
             startdate = unixEpoch - (60 * 60 * 48)
-        startdate = unixEpoch - (60 * 60 * 48)
-        # data = {"search": [{"startDate": startdate * 1000, "endDate": unixEpoch * 1000, "ids": list(names.keys())}]}
 
         auth = self.getAuth(regenerate=False,
                             second_factor='trusted_device' if self.ctx.cfg.general_trustedDevice else 'sms')
