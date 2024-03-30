@@ -63,6 +63,7 @@ class FindMy:
             hashedKey = tag.hashedAdvKey
             privkeys[hashedKey] = tag.privateKey
             names[hashedKey] = tag.name
+            tag.updated = False
 
         unixEpoch = int(datetime.datetime.now().strftime('%s'))
         if self.ctx.lastLocationUpdate > 0:
@@ -77,16 +78,16 @@ class FindMy:
         queue = list(names.keys())
         chunk = []
         res = []
-        while len(queue)>0:
+        while len(queue) > 0:
             chunk.append(queue.pop(0))
             if len(chunk) == 5 or len(queue) == 0:
                 data = {
                     "search": [{"startDate": startdate * 1000, "endDate": unixEpoch * 1000, "ids": chunk}]}
                 r = requests.post("https://gateway.icloud.com/acsnservice/fetch",
-                          auth=auth,
-                          headers=generate_anisette_headers(
-                              self.ctx.cfg.general_anisetteHost + ":" + str(self.ctx.cfg.general_anisettePort)),
-                          json=data)
+                                  auth=auth,
+                                  headers=generate_anisette_headers(
+                                      self.ctx.cfg.general_anisetteHost + ":" + str(self.ctx.cfg.general_anisettePort)),
+                                  json=data)
                 res.extend(json.loads(r.content.decode())['results'])
                 self.ctx.log.info(f'{r.status_code}: {len(res)} reports received.')
                 chunk = []
@@ -116,7 +117,7 @@ class FindMy:
                 tag['goog'] = 'https://maps.google.com/maps?q=' + str(tag['lat']) + ',' + str(tag['lon'])
                 for t in self.ctx.airtags.values():
                     if report['id'] == t.hashedAdvKey:
-                        t.updateLocation(timestamp, tag['lat'], tag['lon'])
+                        t.updateLocation(timestamp, tag['lat'], tag['lon'], tag['status'])
                 found.add(tag['key'])
                 ordered.append(tag)
         self.ctx.log.info(f'{len(ordered)} reports used.')

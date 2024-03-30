@@ -122,10 +122,18 @@ function listTags() {
                 Object.keys(jsn).forEach(function(key) {
                     console.log('Key : ' + key + ', Value : ' + jsn[key])
                     console.log(jsn[key].name)
-                    var html = document.getElementById("tmplAirTag").innerHTML;
+                    var html;
+                    if (jsn[key].hasBattery) {
+                        html = document.getElementById("tmplAirTag2").innerHTML;
+                    } else {
+                        html = document.getElementById("tmplAirTag").innerHTML;
+                    }
                     var strDate = "never"
                     if (jsn[key].lastSeen) {
                         strDate = tsToDateString(jsn[key].lastSeen)
+                        if(jsn[key].direct) {
+                            strDate += " (direct)"
+                        }
                         var pos = L.latLng(jsn[key].latitude, jsn[key].longitude);
                         arrLatLon.push(pos)
                         var marker = L.marker(pos)
@@ -136,8 +144,13 @@ function listTags() {
                         );
                         mapMarkers.push(marker)
                     }
+                    let png = '.png';
+                    if (jsn[key].updated) {
+                        png = 'Bold.png';
+                    }
                     root.innerHTML += html.replace(/##NAME##/g, jsn[key].name).replace(/##ID##/g, jsn[key].id)
-                            .replace(/##LASTSEEN##/g, strDate).replace(/##IMGID##/g, "./" + jsn[key].imgId + ".png");
+                            .replace(/##LASTSEEN##/g, strDate).replace(/##IMGID##/g, "./" + jsn[key].imgId + png)
+                            .replace(/##BATLEVEL##/g, "./battery" + jsn[key].batteryLevel + ".png");
                 });
                 root.style.color= "#f2f2f2";
                 var bounds = new L.LatLngBounds(arrLatLon);
@@ -284,6 +297,7 @@ function editTag(id) {
                 else {
                     markImg("airtag");
                 }
+                document.getElementById("batStatus").checked = jsn.hasBattery;
             }
         }
     }
@@ -375,16 +389,13 @@ function addTag() {
     document.getElementById("id").value= id
     document.getElementById("rightTagEditor").style.display = 'block';
     document.getElementById("rightMap").style.display = 'none';
+    document.getElementById("hasBatStatus").checked = false;
     markImg('airtag');
 }
 
 function markImg(imgName) {
-    const orgRGB = [0xff, 0xc0, 00];
-    const markRGB = [0x70, 0x30, 0xa0];
     document.getElementById("imgId").value = imgName
-    const amountLow = -1;
-    const amountHigh = 1;
-    const imgs = ['airtag', 'backpack', 'bike', 'keys', 'suitcase', 'safe', 'tool'];
+    const imgs = ['airtag', 'backpack', 'bike', 'keys', 'suitcase', 'safe', 'tool', 'mailbox'];
     let src;
     imgs.forEach(function(element) {
         let img = document.getElementById(element);
@@ -405,9 +416,10 @@ function saveTagEdit() {
     var cmd = document.getElementById("cmd").value;
     var id = document.getElementById("id").value;
     var imgId = document.getElementById("imgId").value;
+    var hasBatStatus = document.getElementById("batStatus").checked;
     var url = "/api"
     var params = { "command" : cmd, "name": fldName, "privateKey": privKey, "advertisementKey": advKey, "id": id,
-                "imgId": imgId };
+                "imgId": imgId, 'hasBatteryStatus': hasBatStatus };
     var completeUrl = url + formatParams(params)
     console.log(completeUrl)
     var http = new XMLHttpRequest();

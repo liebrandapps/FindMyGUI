@@ -10,6 +10,20 @@ https://github.com/JJTech0130/pypush
 
 For map display OpenStreetMap (https://openstreetmap.org) and leaflet.js (https://leafletjs.com) is used.
 
+## Update April 2024
+
+The new version available since end of March 2024 contains a substantial update. It supports 
+MQTT to interact with local BLE scanners:
+
+https://github.com/liebrandapps/DIYAirTagSniffer
+
+Firmwares transmitting the battery level in the status byte are also supported. The battery
+battery level is displayed as icon. 
+
+https://github.com/dakhnod/FakeTag
+
+My own version for such a firmware is not yet ready for publication. I am working on it.
+
 
 ## Initial Setup and Configuration
 
@@ -97,3 +111,7 @@ Use your (no longer functional with Mac 14) Openhaystack App to get the keys:
 7. Press "Save"
 8. Press "Update location data" to get the last known location of the tag.
 
+
+## Mac OS (M1) Installation
+
+pip3 install pycryptodome==3.11.0 --no-cache-dir --verbose --force-reinstall

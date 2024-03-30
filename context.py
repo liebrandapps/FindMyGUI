@@ -4,6 +4,7 @@
   See file LICENSE or go to for full license details https://github.com/liebrandapps/FindMyGUI
 """
 import json
+import os
 import threading
 from datetime import datetime
 from os.path import exists
@@ -27,6 +28,9 @@ class Context:
         self._errMsg = ""
         self._lastLocationUpdate = 0
         self._usedReports = 0
+        self._privKey = None
+        self._mqtt = None
+        self._aesKeys = {}
 
     def load(self):
         if exists(Context.statusFile):
@@ -35,9 +39,14 @@ class Context:
             self._lastLocationUpdate = dta['lastLocationUpdate']
             if 'usedReports' in dta:
                 self._usedReports = dta['usedReports']
+            if 'privKey' in dta:
+                self._privKey = dta['privKey']
 
     def save(self):
-        j = {"lastLocationUpdate": self._lastLocationUpdate, "usedReports": self._usedReports}
+        j = {"lastLocationUpdate": self._lastLocationUpdate, "usedReports": self._usedReports,
+             "privKey": self._privKey}
+        if exists(Context.statusFile):
+            os.rename(Context.statusFile, Context.statusFile + ".bak")
         with open(Context.statusFile, 'w') as f:
             print(json.dumps(j, indent=4), file=f)
 
@@ -52,6 +61,26 @@ class Context:
     @property
     def airtags(self):
         return self.__airtags
+
+    @property
+    def privKey(self):
+        return self._privKey
+
+    @privKey.setter
+    def privKey(self, value):
+        self._privKey = value
+
+    @property
+    def mqtt(self):
+        return self.__mqtt
+
+    @mqtt.setter
+    def mqtt(self, value):
+        self.__mqtt = value
+
+    @property
+    def aesKeys(self):
+        return self._aesKeys
 
     @property
     def threadMonitor(self):

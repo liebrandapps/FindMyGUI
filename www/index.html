@@ -46,6 +46,8 @@
                 <input type="text" id="privKey" name="privKey" size="50" style="margin-bottom:20px;"/><br>
                 <label for="advKey">Advertisement Key (Base64):</label><br>
                 <input type="text" id="advKey" name="advKey" size="50" style="margin-bottom:20px;"/><br>
+                <label for="batStatus">Transmits Battery Status</label>
+                <input type="checkbox" id="batStatus" name="batStatus"/><br><br>
                 <button type="button" onclick="generateKeys();">Generate Keys</button>
                 <br><br>
                 <input type="hidden" id="cmd"/>
@@ -58,6 +60,7 @@
                 <img id="safe" src="./safe.png" onclick="markImg('safe');" style="width:80px;"/>
                 <img id="suitcase" src="./suitcase.png" onclick="markImg('suitcase');" style="width:80px;"/>
                 <img id="tool" src="./tool.png" onclick="markImg('tool');" style="width:80px;"/>
+                <img id="mailbox" src="./mailbox.png" onclick="markImg('mailbox');" style="width:80px;" />
                 <br>
                 <button type="button" onclick="saveTagEdit();">Save</button>
                 <button type="button" onclick="cancelTagEdit();">Cancel</button>
@@ -102,6 +105,25 @@
                             <span style="font-size:8pt;">[##LASTSEEN##]</span>
                         </td>
                         <td style="width:30%; margin-right:15px;" class="ralign">
+                            <img src="./settings.png" style="width:30px;" onclick="editTag('##ID##');">
+                            <img src="./history.png" style="width:30px;" onclick="loadHistory('##ID##');">
+                        </td>
+                    </tr>
+                </table>
+                <hr>
+            </div>
+        <div id="tmplAirTag2" style="display:none; color=#F2F2F2;">
+                <table style="margin-bottom:5px; width:100%;">
+                    <tr>
+                        <td style="width:15%;">
+                            <img src="##IMGID##" style="width:40px;" onclick="editTag('##ID##');">
+                        </td>
+                        <td style="width:48%;">
+                            <span style="font-size:10pt;">##NAME##<br> </span>
+                            <span style="font-size:8pt;">[##LASTSEEN##]</span>
+                        </td>
+                        <td style="width:37%; margin-right:15px;" class="ralign">
+                            <img src="##BATLEVEL##" style="width:30px;" >
                             <img src="./settings.png" style="width:30px;" onclick="editTag('##ID##');">
                             <img src="./history.png" style="width:30px;" onclick="loadHistory('##ID##');">
                         </td>

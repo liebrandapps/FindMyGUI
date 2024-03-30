@@ -36,7 +36,7 @@ class API:
             result = self._getTagData(params['id'][0])
         if cmd == 'editTag':
             result = self._editTag(params['id'][0], params['name'][0], params['privateKey'][0],
-                                   params['advertisementKey'][0], params['imgId'][0])
+                                   params['advertisementKey'][0], params['imgId'][0], params['hasBatteryStatus'][0])
         if cmd == 'addTag':
             result = self._addTag(params['id'][0], params['name'][0], params['privateKey'][0],
                                   params['advertisementKey'][0], params['imgId'][0])
@@ -87,15 +87,16 @@ class API:
             dct = {'status': 'fail', 'msg': 'tag not found', 'id': id}
         return dct
 
-    def _editTag(self, id, name, privKey, advKey, imgId):
+    def _editTag(self, id, name, privKey, advKey, imgId, hasBatteryStatus):
         self.log.debug(f"[API] Cmds' editTag parameter are id={id}, name={name}, private Key={privKey}, "
-                       f"advertisementKey={advKey}")
+                       f"advertisementKey={advKey}, hasBatteryStatus={hasBatteryStatus} ")
         if id in self.ctx.airtags.keys():
             tag = self.ctx.airtags[id]
             tag.name = name
             tag.privateKey = privKey
             tag.advertisementKey = advKey
             tag.imgId = imgId
+            tag.hasBatteryStatus = hasBatteryStatus
             if tag.needsSave:
                 tag.save()
             dct = {'status': 'ok', 'dataChanged': str(tag.needsSave)}

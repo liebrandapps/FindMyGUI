@@ -20,8 +20,14 @@ class AirTag:
         self._lastSeen = None
         self._latitude = None
         self._longitude = None
+        self._direct = False
         self._history = {}
         self._imgId = "airtag"
+        self._status = 0
+        self._hasBattery = False
+        self._batteryLevel = 0
+        self._eventCount = 0
+        self._updated = False
         if jsonFile is None:
             airTagDir = ctx.cfg.general_airTagDirectory
             airTagSuffix = ctx.cfg.general_airTagSuffix
@@ -56,6 +62,16 @@ class AirTag:
             self._history = dta['history']
         if 'imgId' in dta.keys():
             self._imgId = dta['imgId']
+        if 'direct' in dta.keys():
+            self._direct = dta['direct']
+        if 'status' in dta.keys():
+            self._status = dta['status']
+            self._updateBatteryLevel(self._status)
+        if 'hasBattery' in dta.keys():
+            self._hasBattery = dta['hasBattery']
+            self._eventCount = dta['eventCount']
+        if 'updated' in dta.keys():
+            self._updated = dta['updated']
         self.log.info(f"Loaded AirTag [{self._name} / {self.__id}] from file {self.fileName}")
         self._needsSave = False
 
@@ -63,7 +79,7 @@ class AirTag:
         toRemove = []
         cutOff = datetime.now() - timedelta(days=self.cfg.general_history)
         for h in self._history.keys():
-            if int(h) < cutOff.timestamp():
+            if int(float(h)) < cutOff.timestamp():
                 toRemove.append(h)
         for r in toRemove:
             del self._history[r]
@@ -87,8 +103,14 @@ class AirTag:
                 'lastSeen': self._lastSeen,
                 'longitude': self._longitude,
                 'latitude': self._latitude,
+                'direct': self._direct,
                 'history': self._history,
                 'imgId': self._imgId,
+                'status': self._status,
+                'hasBattery': self._hasBattery,
+                'batteryLevel': self._batteryLevel,
+                'eventCount': self._eventCount,
+                'updated': self._updated,
                 'id': self.id}
 
     def resolveTag(self, tag):
@@ -149,12 +171,24 @@ class AirTag:
     def longitude(self):
         return self._longitude
 
-    def updateLocation(self, when, latitude, longitude):
+    @property
+    def status(self):
+        return self._status
+
+    @property
+    def direct(self):
+        return self._direct
+
+    def updateLocation(self, when, latitude, longitude, status, direct=False):
         if self._lastSeen is None or when > self._lastSeen:
             self._longitude = longitude
             self._latitude = latitude
+            self._status = status
             self._lastSeen = when
-        self._history[when] = {'lat': latitude, 'lon': longitude}
+            self._direct = direct
+            self._updateBatteryLevel(status)
+            self._updated = True
+        self._history[when] = {'lat': latitude, 'lon': longitude, 'status': status, 'direct': direct}
         self._needsSave = True
 
     @property
@@ -169,3 +203,35 @@ class AirTag:
     def imgId(self, value):
         self._needsSave = self._needsSave or value != self.imgId
         self._imgId = value
+
+    @property
+    def hasBatteryStatus(self):
+        return self._hasBattery
+
+    @hasBatteryStatus.setter
+    def hasBatteryStatus(self, value):
+        self._needsSave = self._needsSave or value != self._hasBattery
+        self._hasBattery = value
+
+    @property
+    def batteryLevel(self):
+        return self._batteryLevel
+
+    @batteryLevel.setter
+    def batteryLevel(self, value):
+        self._needsSave = self._needsSave or value != self._batteryLevel
+        self._batteryLevel = value
+
+    @property
+    def updated(self):
+        return self._updated
+
+    @updated.setter
+    def updated(self, value):
+        self._needsSave = self._needsSave or value != self._updated
+        self._updated = value
+
+    def _updateBatteryLevel(self, status):
+        idx = (status & 0b11000000) >> 6
+        self.batteryLevel = ['full', 'medium', 'low', 'critical'][idx]
+        self._eventCount = (status & 0b00111111)
