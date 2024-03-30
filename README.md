@@ -10,6 +10,8 @@ https://github.com/JJTech0130/pypush
 
 For map display OpenStreetMap (https://openstreetmap.org) and leaflet.js (https://leafletjs.com) is used.
 
+![Screenshot](./assets/screenshot.png)
+
 ## Update April 2024
 
 The new version available since end of March 2024 contains a substantial update. It supports 
