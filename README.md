@@ -117,3 +117,40 @@ Use your (no longer functional with Mac 14) Openhaystack App to get the keys:
 ## Mac OS (M1) Installation
 
 pip3 install pycryptodome==3.11.0 --no-cache-dir --verbose --force-reinstall
+
+
+# Using local BLE Scanners 
+
+Tracking can be expanded to local BLE scanners. This might be useful for indoor locating.
+
+** Feature has not been tested extensively, feedback welcome **
+
+You will need hardware supporting Bluetooth Low Energy (e.g. a Raspberry) and the code from this project:
+
+https://github.com/liebrandapps/DIYAirTagSniffer
+
+plus a working MQTT Server (below briefly the required commands):
+
+```bash
+apt install mosquitto
+mosquitto_passwd -b /etc/mosquitto/pwfile <user> <password>
+service mosquitto restart
+```
+Create users for the sniffer app and the server. Configure these in the ini files.
+
+## What it does
+
+Below a diagram showing the communication of the components. 
+
+![Screenshot](./assets/mqttDiagram.png)
+
+1. The FindMyGUI (FMG) server has a RSA key stored in the findMyGUI.json file. If there is none, it will be added on start.
+2. The DIYAirTagSniffer (ATS) generates a UID and a AES encryption key and store it locally.
+3. Both FMG server and ATS app connect to the MQTT server on start
+4. ATS requests the public RSA key of the server
+5. FMG responds public RSA key  
+6. ATS sends the AES key encrypted by the FMGs RSA public key and requests AirTag data
+7. FMG sends the AirTag data encrypted with the ATSs AES key
+8. In case ATS receives a BLE advertisement of an airtag, it send publishes the data to MQTT
+
+It is possible to have multiple ATS instances
