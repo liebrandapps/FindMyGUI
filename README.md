@@ -145,12 +145,12 @@ Below a diagram showing the communication of the components.
 ![Screenshot](./assets/mqttDiagram.png)
 
 1. The FindMyGUI (FMG) server has a RSA key stored in the findMyGUI.json file. If there is none, it will be added on start.
-2. The DIYAirTagSniffer (ATS) generates a UID and a AES encryption key and store it locally.
+2. The DIYAirTagSniffer (ATS) generates a UID and a AES encryption key and stores it locally.
 3. Both FMG server and ATS app connect to the MQTT server on start
 4. ATS requests the public RSA key of the server
-5. FMG responds public RSA key  
+5. FMG responds with public RSA key  
 6. ATS sends the AES key encrypted by the FMGs RSA public key and requests AirTag data
 7. FMG sends the AirTag data encrypted with the ATSs AES key
-8. In case ATS receives a BLE advertisement of an airtag, it send publishes the data to MQTT
+8. In case ATS receives a BLE advertisement of an airtag, it send publishes the AES encrypted data to MQTT
 
-It is possible to have multiple ATS instances
+It is possible to have multiple ATS instances.
