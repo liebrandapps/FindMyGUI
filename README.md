@@ -27,7 +27,7 @@ https://github.com/dakhnod/FakeTag
 My own version for such a firmware is not yet ready for publication. I am working on it.
 
 
-## Initial Setup and Configuration
+## Building it yourself
 
 You need two projects from github:
 
@@ -43,6 +43,48 @@ For this project, you need python 3 and some dependencies:
 ```bash
 pip3 install -r ./requirements.txt
 ```
+Create a data directory and sub directory as described with the docker setup. In a non-docker install the data directory
+must be at the root of project.
+
+## Alternative Install with Docker (simpler!)
+
+```bash
+git clone https://github.com/liebrandapps/FindMyGUI.git
+docker build -t fmg_app .
+```
+
+Change directory to a location from where you want to execute and create the following directories:
+
+```bash
+mkdir data
+mkdir data/airtags
+mkdir data/log
+```
+
+In the data directory create a file called findMyGUI.ini with the following content:
+
+```bash
+[general]
+anisetteHost=<IP of your anisetteHost>
+
+# set trustedDevice to true, if your apple id is not configured for sms as 2nd factor
+[appleId]
+trustedDevice=True
+```
+
+The next two docker commands start the necessary container. Please make sure that the IP address of your
+DNS Server is correct. Also the second docker command needs to be executed on the parent directory of ./data
+
+```bash
+# Replace the DNS Server (192.168.2.1) with your local DNS
+docker run -d --restart always --name anisette-v3 --dns 192.168.2.1 -p 6969:6969 --volume anisette-v3_data:/home/Alcoholic/.config/anisette-v3/lib dadoum/anisette-v3-server
+
+docker run -t -d --restart always --dns 192.168.2.1 -p 8008:8008 -v ./data:/usr/src/app/data --name fmg_app fmg_app
+```
+
+
+
+
 
 ## Disclaimer
 
