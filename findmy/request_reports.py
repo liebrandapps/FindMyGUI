@@ -35,7 +35,7 @@ class FindMy:
         return {'lat': latitude, 'lon': longitude, 'conf': confidence, 'status': status}
 
     def getAuth(self, regenerate=False, second_factor='sms'):
-        CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + "/auth.json"
+        CONFIG_PATH =  "./data/auth.json"
         if os.path.exists(CONFIG_PATH) and not regenerate:
             with open(CONFIG_PATH, "r") as f:
                 j = json.load(f)
@@ -56,7 +56,7 @@ class FindMy:
                 json.dump(j, f)
         return (j['dsid'], j['searchPartyToken'])
 
-    def retrieveLocations(self):
+    def retrieveLocations(self, usePrevAuth=True):
         privkeys = {}
         names = {}
         for tag in self.ctx.airtags.values():
@@ -66,13 +66,17 @@ class FindMy:
             tag.updated = False
 
         unixEpoch = int(datetime.datetime.now().strftime('%s'))
-        if self.ctx.lastLocationUpdate > 0:
+        if self.ctx.lastLocationUpdate > 0:  # (unixEpoch - (60 * 60 * 144)):
             startdate = self.ctx.lastLocationUpdate
         else:
             startdate = unixEpoch - (60 * 60 * 48)
 
-        auth = self.getAuth(regenerate=False,
-                            second_factor='trusted_device' if self.ctx.cfg.general_trustedDevice else 'sms')
+        self.ctx.log.info(f"[LOC RETR] Time window for query is " +
+                          f"{datetime.datetime.fromtimestamp(startdate).strftime( '%Y-%m-%d %H:%M:%S')} to " +
+                          f"{datetime.datetime.fromtimestamp(unixEpoch).strftime('%Y-%m-%d %H:%M:%S')}")
+
+        auth = self.getAuth(regenerate=not (usePrevAuth),
+                            second_factor='trusted_device' if self.ctx.cfg.appleId_trustedDevice else 'sms')
         if auth is None:
             return
         queue = list(names.keys())
@@ -88,6 +92,14 @@ class FindMy:
                                   headers=generate_anisette_headers(
                                       self.ctx.cfg.general_anisetteHost + ":" + str(self.ctx.cfg.general_anisettePort)),
                                   json=data)
+                if r.status_code == 401:
+                    if not (usePrevAuth):
+                        self.ctx.log.error("[iCloud] Anisette is not accepting auth, GIVING UP")
+                        return
+                    else:
+                        self.ctx.log.warn("[iCloud] Anisette is not accepting auth, trying to request PW")
+                        self.retrieveLocations(False)
+
                 res.extend(json.loads(r.content.decode())['results'])
                 self.ctx.log.info(f'{r.status_code}: {len(res)} reports received.')
                 chunk = []
@@ -101,13 +113,18 @@ class FindMy:
             # the following is all copied from https://github.com/hatomist/openhaystack-python, thanks @hatomist!
             timestamp = int.from_bytes(data[0:4], 'big') + 978307200
             if timestamp >= startdate:
-                eph_key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP224R1(), data[5:62])
+                adj = len(data) - 88
+                try:
+                    eph_key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP224R1(), data[5+adj:62+adj])
+                except ValueError as e:
+                    self.ctx.log.warn(e)
+                    continue
                 shared_key = ec.derive_private_key(priv, ec.SECP224R1(), default_backend()).exchange(ec.ECDH(), eph_key)
-                symmetric_key = self.sha256(shared_key + b'\x00\x00\x00\x01' + data[5:62])
+                symmetric_key = self.sha256(shared_key + b'\x00\x00\x00\x01' + data[5+adj:62+adj])
                 decryption_key = symmetric_key[:16]
                 iv = symmetric_key[16:]
-                enc_data = data[62:72]
-                tag = data[72:]
+                enc_data = data[62+adj:72+adj]
+                tag = data[72+adj:]
 
                 decrypted = self.decrypt(enc_data, algorithms.AES(decryption_key), modes.GCM(iv, tag))
                 tag = self.decode_tag(decrypted)

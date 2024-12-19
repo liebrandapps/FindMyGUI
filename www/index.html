@@ -47,7 +47,12 @@
                 <label for="advKey">Advertisement Key (Base64):</label><br>
                 <input type="text" id="advKey" name="advKey" size="50" style="margin-bottom:20px;"/><br>
                 <label for="batStatus">Transmits Battery Status</label>
-                <input type="checkbox" id="batStatus" name="batStatus"/><br><br>
+                <input type="checkbox" id="batStatus" name="batStatus"/><br>
+                <label for="useDNS">Update last position via Dynamic DNS</label>
+                <input type="checkbox" id="useDNS" name="useDNS"/><br>
+                <label for="dnsId">Dynamic DNS Prefix</label>
+                <input type="text" id="dnsId" name="dnsId" size="25" style="margin-bottom:20px;">
+                <br>
                 <button type="button" onclick="generateKeys();">Generate Keys</button>
                 <br><br>
                 <input type="hidden" id="cmd"/>

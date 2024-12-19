@@ -11,7 +11,7 @@ from os.path import exists
 
 
 class Context:
-    statusFile = "./findMyGUI.json"
+    statusFile = "./data/findMyGUI.json"
 
     def __init__(self, cfg, log):
         self.__log = log
@@ -31,6 +31,7 @@ class Context:
         self._privKey = None
         self._mqtt = None
         self._aesKeys = {}
+        self._automaticUpdatePossible = False
 
     def load(self):
         if exists(Context.statusFile):
@@ -41,10 +42,12 @@ class Context:
                 self._usedReports = dta['usedReports']
             if 'privKey' in dta:
                 self._privKey = dta['privKey']
+            if 'automaticUpdatesPossible' in dta:
+                self._automaticUpdatePossible = dta['automaticUpdatesPossible']
 
     def save(self):
         j = {"lastLocationUpdate": self._lastLocationUpdate, "usedReports": self._usedReports,
-             "privKey": self._privKey}
+             "privKey": self._privKey, "automaticUpdatesPossible": self._automaticUpdatePossible}
         if exists(Context.statusFile):
             os.rename(Context.statusFile, Context.statusFile + ".bak")
         with open(Context.statusFile, 'w') as f:
@@ -186,3 +189,12 @@ class Context:
     def usedReports(self, value):
         self._usedReports = value
         self.save()
+
+    @property
+    def automaticUpdatesPossible(self):
+        return self._automaticUpdatePossible
+
+    @automaticUpdatesPossible.setter
+    def automaticUpdatesPossible(self, value):
+        self._automaticUpdatePossible = value
+

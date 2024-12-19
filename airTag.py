@@ -1,9 +1,12 @@
 import base64
 import hashlib
 import json
+import string
 import uuid
 from datetime import datetime, timedelta
 from os.path import join
+from random import SystemRandom
+
 
 
 class AirTag:
@@ -235,3 +238,4 @@ class AirTag:
         idx = (status & 0b11000000) >> 6
         self.batteryLevel = ['full', 'medium', 'low', 'critical'][idx]
         self._eventCount = (status & 0b00111111)
+

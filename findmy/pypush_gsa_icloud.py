@@ -40,14 +40,15 @@ def icloud_login_mobileme(ctx, second_factor='sms'):
         ctx.signInDone = False
         ctx.requestCreds = int(now.timestamp())
         ctx.log.info("[ICLOUD] Waiting for password (90 seconds from now on)")
-        interval = 30
+        interval = 90
         while interval > 0:
-            time.sleep(3.0)
+            time.sleep(1.0)
             if len(ctx.userName) > 0 and len(ctx.password) > 0:
                 username = ctx.userName
                 password = ctx.password
                 interval = 0
                 continue
+            interval -= 1
     if not username or not password:
         ctx.log.error("[ICLOUD] No User/Password received, stopping")
         return None
@@ -135,7 +136,7 @@ def gsa_authenticate(username, password, ctx, second_factor='sms'):
             success = trusted_second_factor(spd["adsid"], spd["GsIdmsToken"], ctx)
         if not success:
             return
-        return gsa_authenticate(username, password, anisetteUrl)
+        return gsa_authenticate(username, password, ctx, anisetteUrl)
     elif "au" in r["Status"]:
         ctx.log.debug(f"Unknown auth value {r['Status']['au']}")
         return
@@ -285,19 +286,21 @@ def trusted_second_factor(dsid, idms_token, ctx):
     # code = getpass("Enter 2FA code: ")
 
     now = datetime.now()
-    ctx.signInDone = True
     code = ""
     ctx.requestAuth = int(now.timestamp())
-    ctx.log.info("[ICLOUD] Waiting for 2nd Factor (90 seconds from now on)")
-    interval = 30
+    ctx.log.info("[ICLOUD] Waiting for 2nd Factor TRUSTED DEVICE (90 seconds from now on)")
+    interval = 90
     while interval > 0:
-        time.sleep(3.0)
+        time.sleep(1.0)
         if len(ctx.ndFactor) > 0:
             code = ctx.ndFactor
-            continue
+            break
+        interval -= 1
+    ctx.signInDone = True
     if not code:
         ctx.log.error("[ICLOUD] No 2nd Factor received, stopping")
         return False
+    ctx.log.info(f"[ICLOUD] No 2nd Factor received {code}")
 
     headers["security-code"] = code
 
@@ -311,6 +314,7 @@ def trusted_second_factor(dsid, idms_token, ctx):
     if resp.ok:
         ctx.log.info("2FA successful")
         return True
+    ctx.log.error(f"[ICLOUD] 2FA not successful ({code}")
     return False
 
 
@@ -351,16 +355,16 @@ def sms_second_factor(dsid, idms_token, ctx):
     # code = getpass("Enter 2FA code: ")
 
     now = datetime.now()
-    ctx.signInDone = True
     code = ""
     ctx.requestAuth = int(now.timestamp())
-    ctx.log.info("[ICLOUD] Waiting for 2nd Factor (90 seconds from now on)")
-    interval = 30
+    ctx.log.info("[ICLOUD] Waiting for 2nd Factor SMS (90 seconds from now on)")
+    interval = 90
     while interval > 0:
-        time.sleep(3.0)
+        time.sleep(1.0)
         if len(ctx.ndFactor) > 0:
             code = ctx.ndFactor
-            continue
+            break
+        interval -= 1
     if not code:
         ctx.log.error("[ICLOUD] No 2nd Factor received, stopping")
         return False
@@ -376,6 +380,7 @@ def sms_second_factor(dsid, idms_token, ctx):
         verify=False,
         timeout=5,
     )
+    ctx.signInDone = True
     if resp.ok:
         ctx.log.info("2FA successful")
         return True

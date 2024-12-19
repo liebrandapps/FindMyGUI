@@ -36,7 +36,8 @@ class API:
             result = self._getTagData(params['id'][0])
         if cmd == 'editTag':
             result = self._editTag(params['id'][0], params['name'][0], params['privateKey'][0],
-                                   params['advertisementKey'][0], params['imgId'][0], params['hasBatteryStatus'][0])
+                                   params['advertisementKey'][0], params['imgId'][0], params['hasBatteryStatus'][0],
+                                   params['useDNS'][0], params['dnsId'][0])
         if cmd == 'addTag':
             result = self._addTag(params['id'][0], params['name'][0], params['privateKey'][0],
                                   params['advertisementKey'][0], params['imgId'][0])
@@ -62,6 +63,7 @@ class API:
 
     def _getPos(self):
         findMy = FindMy(self.ctx)
+        self.ctx.automaticUpdatesPossible = True
         data = findMy.retrieveLocations()
         return data
 
@@ -87,9 +89,9 @@ class API:
             dct = {'status': 'fail', 'msg': 'tag not found', 'id': id}
         return dct
 
-    def _editTag(self, id, name, privKey, advKey, imgId, hasBatteryStatus):
+    def _editTag(self, id, name, privKey, advKey, imgId, hasBatteryStatus, useDNS, dnsId):
         self.log.debug(f"[API] Cmds' editTag parameter are id={id}, name={name}, private Key={privKey}, "
-                       f"advertisementKey={advKey}, hasBatteryStatus={hasBatteryStatus} ")
+                       f"advertisementKey={advKey}, hasBatteryStatus={hasBatteryStatus}, ")
         if id in self.ctx.airtags.keys():
             tag = self.ctx.airtags[id]
             tag.name = name
@@ -131,10 +133,12 @@ class API:
                 self.ctx.errMsg = ""
                 break
             elif self.ctx.requestCreds > timeStamp:
+                self.ctx.automaticUpdatesPossible = False
                 dct['status'] = "creds"
                 dct['timeStamp'] = self.ctx.requestCreds
                 break
             elif self.ctx.requestAuth > timeStamp:
+                self.ctx.automaticUpdatesPossible = False
                 dct['status'] = "auth"
                 dct['timeStamp'] = self.ctx.requestAuth
                 break

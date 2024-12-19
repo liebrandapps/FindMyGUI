@@ -30,7 +30,7 @@ from daemon import Daemon
 from mqtt import MQTT
 
 APP = "findMyGUI"
-CONFIG_DIR = "./"
+CONFIG_DIR = "./data"
 CONFIG_FILE = "findMyGUI.ini"
 
 
@@ -97,7 +97,7 @@ def mqttCBKey(topic, payload):
     key = RSA.importKey(base64.b64decode(ctx.privKey))
     publicKey = key.publickey()
     resp = {'uid': jsn['uid'], 'publicKey': base64.b64encode(publicKey.exportKey('DER')).decode('ascii')}
-    ctx.mqtt.publish(jsn['responseTopic'], resp)
+    # ctx.mqtt.publish(jsn['responseTopic'], resp)
 
 
 def mqttCBAirTag(topic, payload):
@@ -150,6 +150,10 @@ def mqttCBLocationUpdate(topic, payload):
             airtag.updateLocation(jsn['timestamp'], jsn['lat'], jsn['lon'], jsn['status'], direct=True)
 
 
+def schedule():
+    global ctx
+
+
 class FindMyServer(BaseHTTPRequestHandler):
     """ Extension: ContentType, Encode """
     contentTypeDct = {'.html': ["text/html", True],
@@ -196,12 +200,13 @@ if __name__ == '__main__':
             "httpFiles": ['String', 'www'],
             "anisetteHost": ['String', 'http://192.168.2.15'],
             "anisettePort": ['Integer', 6969],
-            "airTagDirectory": ['String', 'airtags'],
+            "airTagDirectory": ['String', 'data/airtags'],
             "airTagSuffix": ['String', '.json'],
             "history": ["Integer", 30],
+            "automaticQuery": ["Integer", 0],
         },
         "logging": {
-            "logFile": ["String", "/tmp/findMyGUI.log"],
+            "logFile": ["String", "./data/log/findMyGUI.log"],
             "maxFilesize": ["Integer", 1000000],
             "msgFormat": ["String", "%(asctime)s, %(levelname)s, %(module)s {%(process)d}, %(lineno)d, %(message)s"],
             "logLevel": ["Integer", 10],
@@ -226,6 +231,23 @@ if __name__ == '__main__':
             "silent": ["Boolean", False, "If set to true, no received mqtt messages are logged. (Default: False)"],
             "topic": ["String", "findmygui/app/"],
         },
+        "imap": {
+            "host": ['String', 'mail.liebrand.io'],
+            "user": ['String', 'internal@liebrand.io'],
+            "password": ['String', 'tendon-nUrm1m-wypci2'],
+            "useSSL": ['Boolean', True],
+            "folder": ['String', 'airtag'],
+            "sender": ['FindMyGUI'],
+        },
+        "imap": {
+            "host": ['String', 'mail.liebrand.io'],
+            "user": ['String', 'internal@liebrand.io'],
+            "password": ['String', 'tendon-nUrm1m-wypci2'],
+            "useSSL": ['Boolean', True],
+            "folder": ['String', 'airtag'],
+            "sender": ['FindMyGUI'],
+        },
+
     }
     path = join(CONFIG_DIR, CONFIG_FILE)
     if not (exists(path)):

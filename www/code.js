@@ -132,7 +132,7 @@ function listTags() {
                     if (jsn[key].lastSeen) {
                         strDate = tsToDateString(jsn[key].lastSeen)
                         if(jsn[key].direct) {
-                            strDate += " (direct)"
+                            strDate += " (mqtt)"
                         }
                         var pos = L.latLng(jsn[key].latitude, jsn[key].longitude);
                         arrLatLon.push(pos)
@@ -243,9 +243,11 @@ function signInStatus(ts, startTime) {
                 console.log(jsn)
                 if (jsn.status === "creds") {
                     document.getElementById("creds").style.display = "block";
+                    startTime = Date.now();
                 }
                 if (jsn.status === "auth") {
                     document.getElementById("ndFactor").style.display = "block";
+                    startTime = Date.now();
                 }
                 if (jsn.status === "fail") {
                     document.getElementById("errMsg").innerHTML = jsn.msg;
@@ -298,6 +300,8 @@ function editTag(id) {
                     markImg("airtag");
                 }
                 document.getElementById("batStatus").checked = jsn.hasBattery;
+                document.getElementById("useDNS").checked = jsn.useDNS;
+                document.getElementById("dnsId").value = jsn.dnsId;
             }
         }
     }
@@ -390,6 +394,15 @@ function addTag() {
     document.getElementById("rightTagEditor").style.display = 'block';
     document.getElementById("rightMap").style.display = 'none';
     document.getElementById("hasBatStatus").checked = false;
+    document.getElementById("useDNS").checked = false;
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    const randomArray = new Uint8Array(6);
+    crypto.getRandomValues(randomArray);
+    randomArray.forEach((number) => {
+        result += chars[number % chars.length];
+    });
+    document.getElementByID("dnsId") = result;
     markImg('airtag');
 }
 
@@ -417,9 +430,11 @@ function saveTagEdit() {
     var id = document.getElementById("id").value;
     var imgId = document.getElementById("imgId").value;
     var hasBatStatus = document.getElementById("batStatus").checked;
+    var useDNS = document.getElementById("useDNS").checked;
+    var dnsId = document.getElementById("dnsId").value;
     var url = "/api"
     var params = { "command" : cmd, "name": fldName, "privateKey": privKey, "advertisementKey": advKey, "id": id,
-                "imgId": imgId, 'hasBatteryStatus': hasBatStatus };
+                "imgId": imgId, 'hasBatteryStatus': hasBatStatus, 'useDNS': useDNS, 'dnsId': dnsId };
     var completeUrl = url + formatParams(params)
     console.log(completeUrl)
     var http = new XMLHttpRequest();
@@ -458,11 +473,12 @@ function formatParams( params ){
 
 function tsToDateString(ts) {
     var date = new Date(ts * 1000);
-    var year = date.getFullYear()
-    var month = "0" + (date.getMonth()+1)
-    var day = "0" + date.getDate()
-    var hours = "0" + date.getHours();
-    var minutes = "0" + date.getMinutes();
-    var seconds = "0" + date.getSeconds();
-    return hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + " " + day.substr(-2) + "." + month.substr(-2) + "." + year;
+    //var year = date.getFullYear()
+    //var month = "0" + (date.getMonth()+1)
+    //var day = "0" + date.getDate()
+    //var hours = "0" + date.getHours();
+    //var minutes = "0" + date.getMinutes();
+    //var seconds = "0" + date.getSeconds();
+    //return hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + " " + day.substr(-2) + "." + month.substr(-2) + "." + year;
+    return date.toLocaleString();
 }

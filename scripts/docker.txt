@@ -1,0 +1,13 @@
+
+# Replace the DNS Server (192.168.2.1) with your local DNS
+docker run -d --restart always --name anisette-v3 --dns 192.168.2.1 -p 6969:6969 --volume anisette-v3_data:/home/Alcoholic/.config/anisette-v3/lib dadoum/anisette-v3-server
+
+docker run -t -d --rm --dns 192.168.2.1 -p 8008:8008 -v ./data:/usr/src/app/data --name fmg_app fmg_app
+
+
+# building the fmg dockerfile
+
+cd to the directory where the project is checked out
+
+docker build -t fmg_app .
+
