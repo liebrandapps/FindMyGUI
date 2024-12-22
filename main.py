@@ -232,15 +232,7 @@ if __name__ == '__main__':
             "topic": ["String", "findmygui/app/"],
         },
         "imap": {
-            "host": ['String', 'mail.liebrand.io'],
-            "user": ['String', 'internal@liebrand.io'],
-            "password": ['String', 'tendon-nUrm1m-wypci2'],
-            "useSSL": ['Boolean', True],
-            "folder": ['String', 'airtag'],
-            "sender": ['FindMyGUI'],
-        },
-        "imap": {
-            "host": ['String', 'mail.liebrand.io'],
+            "host": ['String', ''],
             "user": ['String', ''],
             "password": ['String', ''],
             "useSSL": ['Boolean', True],
