@@ -241,8 +241,8 @@ if __name__ == '__main__':
         },
         "imap": {
             "host": ['String', 'mail.liebrand.io'],
-            "user": ['String', 'internal@liebrand.io'],
-            "password": ['String', 'tendon-nUrm1m-wypci2'],
+            "user": ['String', ''],
+            "password": ['String', ''],
             "useSSL": ['Boolean', True],
             "folder": ['String', 'airtag'],
             "sender": ['FindMyGUI'],
