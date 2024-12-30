@@ -19,14 +19,14 @@ from urllib.parse import parse_qs, urlparse
 
 from Crypto.PublicKey import RSA
 from Cryptodome.Cipher import PKCS1_OAEP, AES
-from Cryptodome.Hash import SHA256, HMAC
-from Cryptodome.Random import get_random_bytes
+
 
 from airTag import AirTag
 from api import API
 from config import Config
 from context import Context
 from daemon import Daemon
+from imap.imapScheduler import IMAPScheduler
 from mqtt import MQTT
 
 APP = "findMyGUI"
@@ -58,10 +58,13 @@ def terminate(sigNo, _):
     global doTerminate
     global myServer
     global httpIsRunning
+    global scheduler
     if doTerminate:
         return
     doTerminate = True
     ctx.log.info(f"[{APP}] Terminating with Signal {sigNo} {sigs[sigNo]}")
+    if scheduler is not None:
+        scheduler.terminate()
     if httpIsRunning:
         Thread(target=myServer.shutdown).start()
 
@@ -150,8 +153,6 @@ def mqttCBLocationUpdate(topic, payload):
             airtag.updateLocation(jsn['timestamp'], jsn['lat'], jsn['lon'], jsn['status'], direct=True)
 
 
-def schedule():
-    global ctx
 
 
 class FindMyServer(BaseHTTPRequestHandler):
@@ -236,8 +237,10 @@ if __name__ == '__main__':
             "user": ['String', ''],
             "password": ['String', ''],
             "useSSL": ['Boolean', True],
-            "folder": ['String', 'airtag'],
-            "sender": ['FindMyGUI'],
+            "folder": ['String', ''],
+            "sender": ['String', 'FindMyGUI'],
+            "markAsRead": ['Boolean', False],
+            "removeOldReports": ['Boolean', False],
         },
 
     }
@@ -278,6 +281,12 @@ if __name__ == '__main__':
     httpPort = cfg.general_httpPort
 
     loadAirTags()
+
+    if cfg.general_automaticQuery > 0:
+        scheduler = IMAPScheduler(ctx)
+        scheduler.start()
+    else:
+        scheduler = None
 
     myServer = ThreadingHTTPServer((httpHost, httpPort), FindMyServer)
     log.info(f"[{APP}] HTTP Server is starting: {httpHost}:{httpPort}")

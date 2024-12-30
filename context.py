@@ -32,6 +32,7 @@ class Context:
         self._mqtt = None
         self._aesKeys = {}
         self._automaticUpdatePossible = False
+        self._queryInProgress = False
 
     def load(self):
         if exists(Context.statusFile):
@@ -84,6 +85,14 @@ class Context:
     @property
     def aesKeys(self):
         return self._aesKeys
+
+    @property
+    def queryInProgress(self):
+        return self._queryInProgress
+
+    @queryInProgress.setter
+    def queryInProgress(self, value):
+        self._queryInProgress = value
 
     @property
     def threadMonitor(self):
@@ -191,10 +200,10 @@ class Context:
         self.save()
 
     @property
-    def automaticUpdatesPossible(self):
+    def automaticUpdatePossible(self):
         return self._automaticUpdatePossible
 
-    @automaticUpdatesPossible.setter
+    @automaticUpdatePossible.setter
     def automaticUpdatesPossible(self, value):
         self._automaticUpdatePossible = value
 

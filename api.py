@@ -71,12 +71,15 @@ class API:
         self.ctx.signInDone = False
         findMy = FindMy(self.ctx)
         try:
+            self.ctx.queryInProgress = True
             data = findMy.retrieveLocations()
         except requests.exceptions.ConnectTimeout as e:
             msg = f"[API] Anisette Server not running: {str(e)}"
             self.ctx.errMsg = msg
             self.ctx.log.error(msg)
             data = {"status": "fail", "msg": msg}
+        finally:
+            self.ctx.queryInProgress = False
         return data
 
     def _getTagData(self, id):

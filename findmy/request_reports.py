@@ -57,6 +57,7 @@ class FindMy:
         return (j['dsid'], j['searchPartyToken'])
 
     def retrieveLocations(self, usePrevAuth=True):
+        self.ctx.automaticUpdatesPossible = False
         privkeys = {}
         names = {}
         for tag in self.ctx.airtags.values():
@@ -139,7 +140,7 @@ class FindMy:
                 ordered.append(tag)
         self.ctx.log.info(f'{len(ordered)} reports used.')
         ordered.sort(key=lambda item: item.get('timestamp'))
-        for rep in ordered: print(rep)
+        #for rep in ordered: print(rep)
         for t in self.ctx.airtags.values():
             if t.needsSave:
                 t.save()
@@ -148,3 +149,9 @@ class FindMy:
         self.ctx.signInDone = True
         self.ctx.usedReports = len(ordered)
         self.ctx.lastLocationUpdate = int(datetime.datetime.now().timestamp())
+        if usePrevAuth:
+            self.ctx.automaticUpdatesPossible = True
+        self.ctx.save()
+        return {'status': 'ok'}
+
+
