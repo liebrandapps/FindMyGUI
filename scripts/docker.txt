@@ -11,3 +11,31 @@ cd to the directory where the project is checked out
 
 docker build -t fmg_app .
 
+Install Docker on RPI
+https://github.com/slowrunner/wali_pi5/blob/main/configs/docker/1_setup_docker_apt_repo.sh
+https://github.com/slowrunner/wali_pi5/blob/main/configs/docker/2_install_docker_pkgs.sh
+
+
+Build Dockerfile2
+
+docker build -t fmg_app -f Dockerfile2 .
+
+Useful Commands:
+
+clear cache before building:
+
+docker build --no-cache -t fmg_app -f Dockerfile2 .
+
+debug a failed build:
+
+a) Build with DOCKER_BUILDKIT var
+
+DOCKER_BUILDKIT=0 docker build -t fmg_app -f Dockerfile2 .
+
+b) note the ID of the last successful build step, e.g. cd41a83351a8
+
+c) start the container (this gives a shell):
+
+docker run --rm -it cd41a83351a8 sh
+
+

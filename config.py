@@ -104,3 +104,13 @@ class Config:
 
     def readValue(self, key):
         return self.cfg.get(self.section, key)
+
+    def print(self):
+        for section in self.scope.keys():
+            print('[' + section + ']')
+            for key in self.scope[section].keys():
+                tupl = self.scope[section][key]
+                if len(tupl)>2:
+                    print('# ' + tupl[2])
+                print(key + "=" + tupl[1])
+            print()

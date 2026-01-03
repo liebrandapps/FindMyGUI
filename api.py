@@ -5,6 +5,8 @@
 """
 import base64
 import json
+import os
+import subprocess
 import time
 
 from Crypto.Random import random
@@ -37,10 +39,23 @@ class API:
         if cmd == 'editTag':
             result = self._editTag(params['id'][0], params['name'][0], params['privateKey'][0],
                                    params['advertisementKey'][0], params['imgId'][0], params['hasBatteryStatus'][0],
-                                   params['useDNS'][0], params['dnsId'][0])
+                                   params['enableGeoFencing'][0], params['distance'][0],
+                                   params['trustedLocationName'][0] if 'trustedLocationName' in params.keys() else '',
+                                   params['latitude'][0] if 'latitude' in params.keys() else '',
+                                   params['longitude'][0] if 'longitude' in params.keys() else '',
+                                   params['trustedTagId'][0] if 'trustedTagId' in params.keys() else '',
+                                   params['notifyEvent'][0],
+                                   params['notifyText'][0] if 'notifyText' in params.keys() else'')
         if cmd == 'addTag':
             result = self._addTag(params['id'][0], params['name'][0], params['privateKey'][0],
-                                  params['advertisementKey'][0], params['imgId'][0])
+                                  params['advertisementKey'][0], params['imgId'][0], params['hasBatteryStatus'][0],
+                                    params['enableGeoFencing'][0], params['distance'][0],
+                                  params['trustedLocationName'][0] if 'trustedlocationName' in params.keys() else '',
+                                   params['latitude'][0] if 'latitude' in params.keys() else '',
+                                   params['longitude'][0] if 'longitude' in params.keys() else '',
+                                  params['trustedTagId'][0] if 'trustedTagId' in params.keys() else '',
+                                   params['notifyEvent'][0],
+                                   params['notifyText'][0] if 'notifyText' in params.keys() else '')
         if cmd == 'signInStatus':
             result = self._signInStatus(int(params['timeStamp'][0]))
         if cmd == 'creds':
@@ -53,6 +68,9 @@ class API:
             result = self._history(params['id'][0])
         if cmd == 'generateKeys':
             result = self._generateKeys()
+        if cmd == 'firmware':
+            result = self._firmware(params['id'][0],
+                                    params['advertisementKey'][0] if 'advertisementKey' in params.keys() else None)
         return json.dumps(result if result is not None else {})
 
     def _listTags(self):
@@ -92,9 +110,13 @@ class API:
             dct = {'status': 'fail', 'msg': 'tag not found', 'id': id}
         return dct
 
-    def _editTag(self, id, name, privKey, advKey, imgId, hasBatteryStatus, useDNS, dnsId):
+    def _editTag(self, id, name, privKey, advKey, imgId, hasBatteryStatus, geoFencing, distance, trustedLocationName,
+                 latitude, longitude, trustedTag, notifyEvent, notifyText):
         self.log.debug(f"[API] Cmds' editTag parameter are id={id}, name={name}, private Key={privKey}, "
-                       f"advertisementKey={advKey}, hasBatteryStatus={hasBatteryStatus}, ")
+                       f"advertisementKey={advKey}, hasBatteryStatus={hasBatteryStatus}, "
+                       f"geoFencing={geoFencing}, distance={distance}, trustedLocationName={trustedLocationName}, "
+                       f"latitude={latitude}, longitude={longitude}, trustedTag={trustedTag}",
+                       f"notifyEvent={notifyEvent}, notifyText={notifyText}")
         if id in self.ctx.airtags.keys():
             tag = self.ctx.airtags[id]
             tag.name = name
@@ -102,6 +124,16 @@ class API:
             tag.advertisementKey = advKey
             tag.imgId = imgId
             tag.hasBatteryStatus = hasBatteryStatus
+            tag.notifyEvent = notifyEvent
+            tag.notifyText = notifyText
+            tag.enableGeoFencing = geoFencing
+            tag.distance = int(distance)
+            if geoFencing == 'trustLoc':
+                tag.trustedLocationName = trustedLocationName
+                tag.trustedLocationLat = float(latitude)
+                tag.trustedLocationLon = float(longitude)
+            elif geoFencing == 'trustTag':
+                tag.trustedTagId = trustedTag
             if tag.needsSave:
                 tag.save()
             dct = {'status': 'ok', 'dataChanged': str(tag.needsSave)}
@@ -109,14 +141,30 @@ class API:
             dct = {'status': 'fail', 'msg': 'tag not found', 'id': id}
         return dct
 
-    def _addTag(self, id, name, privKey, advKey, imgId):
+    def _addTag(self, id, name, privKey, advKey, imgId, hasBatteryStatus, geoFencing, distance, trustedLocationName,
+                latitude, longitude, trustedTag, notifyEvent, notifyText):
         self.log.debug(f"[API] Cmds' addTag parameter are id={id}, name={name}, private Key={privKey}, "
-                       f"advertisementKey={advKey}")
+                       f"advertisementKey={advKey}, hasBatteryStatus={hasBatteryStatus}, "
+                       f"geoFencing={geoFencing}, distance={distance}, trustedLocationName={trustedLocationName}, "
+                       f"latitude={latitude}, longitude={longitude}, "
+                       f"trustedTag={trustedTag}",
+                       f"notifyEvent={notifyEvent}, notifyText={notifyText}")
         tag = AirTag(self.ctx)
         tag.name = name
         tag.privateKey = privKey
         tag.advertisementKey = advKey
         tag.imgId = imgId
+        tag.hasBatteryStatus = hasBatteryStatus
+        tag.notifyEvent = notifyEvent
+        tag.notifyText = notifyText
+        tag.enableGeoFencing = geoFencing
+        tag.distance = int(distance)
+        if geoFencing == 'trustLoc':
+            tag.trustedLocationName = trustedLocationName
+            tag.trustedLocationLat = float(latitude)
+            tag.trustedLocationLon = float(longitude)
+        elif geoFencing == 'trustTag':
+            tag.trustedTagId = trustedTag
         tag.save()
         self.ctx.airtags[tag.id] = tag
         return {'status': 'ok', 'id': tag.id}
@@ -161,7 +209,8 @@ class API:
         return {'status': 'ok'}
 
     def _lastLocationUpdate(self):
-        return {'lastLocationUpdate': self.ctx.lastLocationUpdate, 'usedReports': self.ctx.usedReports}
+        return {'lastLocationUpdate': self.ctx.lastLocationUpdate, 'usedReports': self.ctx.usedReports,
+                'firmware': self.ctx.cfg.general_firmware}
 
     def _history(self, tagId):
         self.log.debug(f"[API] Cmds' history parameter is id={tagId}")
@@ -186,4 +235,28 @@ class API:
         priv_b64 = base64.b64encode(priv_bytes).decode("ascii")
         adv_b64 = base64.b64encode(adv_bytes).decode("ascii")
         dct = {'status': 'ok', 'privateKey': priv_b64, 'advertisementKey': adv_b64}
+        return dct
+
+    def _firmware(self, tagId, advertisementKey):
+        self.log.debug(f"[API] Cmds' firmware parameter are id={tagId}, advertisementKey={advertisementKey}")
+        dct = {}
+        if advertisementKey is None:
+            dct.update(self._generateKeys())
+        curPath = os.getcwd()
+        workDir = self.ctx.cfg.firmware_workDir
+        os.chdir(workDir)
+        fwBin = os.path.isfile(os.path.join(workDir, self.ctx.cfg.firmware_bin))
+        fwPatch = os.path.isfile(os.path.join(workDir, self.ctx.cfg.firmware_patch))
+        if not(os.path.isfile(fwBin)):
+            self.log.debug(f"[API] Firmware {fwBin} file not found, trying to build")
+            res = subprocess.run(self.ctx.cfg.firmware_mkbuild, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.log.debug(f"[API] Firmware build command finished returncode: {res.returncode}")
+        if os.path.isfile(fwBin):
+            self.log.debug(f"[API] Firmware {fwBin} file found, trying to patch with adv key {advertisementKey}")
+            res = subprocess.run(self.ctx.cfg.firmware_mkpatch, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.log.debug(f"[API] Firmware build command finished returncode: {res.returncode}")
+        if os.path.isfile(fwPatch):
+            pass
+        os.chdir(curPath)
+
         return dct

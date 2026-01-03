@@ -35,7 +35,7 @@ class FindMy:
         return {'lat': latitude, 'lon': longitude, 'conf': confidence, 'status': status}
 
     def getAuth(self, regenerate=False, second_factor='sms'):
-        CONFIG_PATH =  "./data/auth.json"
+        CONFIG_PATH = "./data/auth.json"
         if os.path.exists(CONFIG_PATH) and not regenerate:
             with open(CONFIG_PATH, "r") as f:
                 j = json.load(f)
@@ -54,7 +54,7 @@ class FindMy:
                      'searchPartyToken']}
             with open(CONFIG_PATH, "w") as f:
                 json.dump(j, f)
-        return (j['dsid'], j['searchPartyToken'])
+        return j['dsid'], j['searchPartyToken']
 
     def retrieveLocations(self, usePrevAuth=True):
         self.ctx.automaticUpdatesPossible = False
@@ -70,40 +70,50 @@ class FindMy:
         if self.ctx.lastLocationUpdate > 0:  # (unixEpoch - (60 * 60 * 144)):
             startdate = self.ctx.lastLocationUpdate
         else:
-            startdate = unixEpoch - (60 * 60 * 48)
+            startdate = unixEpoch - (60 * 60 * 24 * 200)
 
         self.ctx.log.info(f"[LOC RETR] Time window for query is " +
-                          f"{datetime.datetime.fromtimestamp(startdate).strftime( '%Y-%m-%d %H:%M:%S')} to " +
+                          f"{datetime.datetime.fromtimestamp(startdate).strftime('%Y-%m-%d %H:%M:%S')} to " +
                           f"{datetime.datetime.fromtimestamp(unixEpoch).strftime('%Y-%m-%d %H:%M:%S')}")
 
-        auth = self.getAuth(regenerate=not (usePrevAuth),
+        auth = self.getAuth(regenerate=not usePrevAuth,
                             second_factor='trusted_device' if self.ctx.cfg.appleId_trustedDevice else 'sms')
         if auth is None:
+            self.ctx.log.warn(f"Auth failed for Apple Id {self.ctx.userName}, skipping")
             return
+
+        '''
+            Apple seems to be limiting the query results to 20 records. For this reason, we go separately 
+            for each airtag.
+        '''
         queue = list(names.keys())
         chunk = []
         res = []
         while len(queue) > 0:
             chunk.append(queue.pop(0))
-            if len(chunk) == 5 or len(queue) == 0:
+            if len(chunk) == 1 or len(queue) == 0:
                 data = {
-                    "search": [{"startDate": startdate * 1000, "endDate": unixEpoch * 1000, "ids": chunk}]}
+                        "search": [{"startDate": startdate * 1000, "endDate": unixEpoch * 1000, "ids": chunk}]}
                 r = requests.post("https://gateway.icloud.com/acsnservice/fetch",
-                                  auth=auth,
-                                  headers=generate_anisette_headers(
-                                      self.ctx.cfg.general_anisetteHost + ":" + str(self.ctx.cfg.general_anisettePort)),
-                                  json=data)
+                                          auth=auth,
+                                          headers=generate_anisette_headers(
+                                              self.ctx.cfg.general_anisetteHost + ":" + str(
+                                                  self.ctx.cfg.general_anisettePort)),
+                                          json=data)
                 if r.status_code == 401:
-                    if not (usePrevAuth):
-                        self.ctx.log.error("[iCloud] Anisette is not accepting auth, GIVING UP")
+                    if not usePrevAuth:
+                        self.ctx.log.error(
+                            f"[iCloud] Anisette is not accepting auth for Apple Id {self.ctx.userName}, GIVING UP")
                         return
                     else:
-                        self.ctx.log.warn("[iCloud] Anisette is not accepting auth, trying to request PW")
+                        self.ctx.log.warn(
+                            f"[iCloud] Anisette is not accepting auth for Apple Id {self.ctx.userName}, trying to "
+                            f"request PW")
                         self.retrieveLocations(False)
-
-                res.extend(json.loads(r.content.decode())['results'])
                 self.ctx.log.info(f'{r.status_code}: {len(res)} reports received.')
                 chunk = []
+
+        res.extend(json.loads(r.content.decode())['results'])
 
         ordered = []
         found = set()
@@ -116,16 +126,16 @@ class FindMy:
             if timestamp >= startdate:
                 adj = len(data) - 88
                 try:
-                    eph_key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP224R1(), data[5+adj:62+adj])
+                    eph_key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP224R1(), data[5 + adj:62 + adj])
                 except ValueError as e:
                     self.ctx.log.warn(e)
                     continue
                 shared_key = ec.derive_private_key(priv, ec.SECP224R1(), default_backend()).exchange(ec.ECDH(), eph_key)
-                symmetric_key = self.sha256(shared_key + b'\x00\x00\x00\x01' + data[5+adj:62+adj])
+                symmetric_key = self.sha256(shared_key + b'\x00\x00\x00\x01' + data[5 + adj:62 + adj])
                 decryption_key = symmetric_key[:16]
                 iv = symmetric_key[16:]
-                enc_data = data[62+adj:72+adj]
-                tag = data[72+adj:]
+                enc_data = data[62 + adj:72 + adj]
+                tag = data[72 + adj:]
 
                 decrypted = self.decrypt(enc_data, algorithms.AES(decryption_key), modes.GCM(iv, tag))
                 tag = self.decode_tag(decrypted)
@@ -136,11 +146,13 @@ class FindMy:
                 for t in self.ctx.airtags.values():
                     if report['id'] == t.hashedAdvKey:
                         t.updateLocation(timestamp, tag['lat'], tag['lon'], tag['status'])
+                        t.appleId = self.ctx.userName
+                        t.updated = True
                 found.add(tag['key'])
                 ordered.append(tag)
         self.ctx.log.info(f'{len(ordered)} reports used.')
         ordered.sort(key=lambda item: item.get('timestamp'))
-        #for rep in ordered: print(rep)
+        # for rep in ordered: print(rep)
         for t in self.ctx.airtags.values():
             if t.needsSave:
                 t.save()
@@ -153,5 +165,3 @@ class FindMy:
             self.ctx.automaticUpdatesPossible = True
         self.ctx.save()
         return {'status': 'ok'}
-
-

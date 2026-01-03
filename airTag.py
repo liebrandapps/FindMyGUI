@@ -1,12 +1,19 @@
 import base64
 import hashlib
 import json
+import math
 import string
 import uuid
 from datetime import datetime, timedelta
 from os.path import join
 from random import SystemRandom
 
+
+def calculateDistance(lonlatA, lonlatB):
+    dx = 71.5 * (lonlatA[0] - lonlatB[0])
+    dy = 111.3 * (lonlatA[1] - lonlatB[1])
+    distance = math.sqrt(dx * dx + dy * dy)
+    return distance * 1000
 
 
 class AirTag:
@@ -31,6 +38,16 @@ class AirTag:
         self._batteryLevel = 0
         self._eventCount = 0
         self._updated = False
+        self._enableGeoFencing = 'disable'
+        self._trustedTagId = None
+        self._trustedLocationName = None
+        self._trustedLocationLat = None
+        self._trustedLocationLon = None
+        self._distance = 0
+        self._eventCountChanged = False
+        self._notifyEvent = False
+        self._notifyText = ""
+        self._appleId = None
         if jsonFile is None:
             airTagDir = ctx.cfg.general_airTagDirectory
             airTagSuffix = ctx.cfg.general_airTagSuffix
@@ -75,6 +92,20 @@ class AirTag:
             self._eventCount = dta['eventCount']
         if 'updated' in dta.keys():
             self._updated = dta['updated']
+        if 'enableGeoFencing' in dta.keys():
+            self._enableGeoFencing = dta['enableGeoFencing']
+            self._trustedTagId = dta['trustedTagId']
+            self._trustedLocationName = dta['trustedLocationName']
+            self._trustedLocationLat = float(dta['trustedLocationLat']) if dta[
+                                                                               'trustedLocationLat'] is not None else 0.0
+            self._trustedLocationLon = float(dta['trustedLocationLon']) if dta[
+                                                                               'trustedLocationLon'] is not None else 0.0
+            self._distance = int(dta['distance']) if dta['distance'] is not None else 0
+        if 'appleId' in dta.keys():
+            self._appleId = dta['appleId']
+        self._eventCountChanged = dta['eventCountChanged'] if 'eventCountChanged' in dta.keys() else False
+        self._notifyEvent = dta['notifyEvent'] if 'notifyEvent' in dta.keys() else False
+        self._notifyText = dta['notifyText'] if 'notifyText' in dta.keys() else ''
         self.log.info(f"Loaded AirTag [{self._name} / {self.__id}] from file {self.fileName}")
         self._needsSave = False
 
@@ -113,8 +144,19 @@ class AirTag:
                 'hasBattery': self._hasBattery,
                 'batteryLevel': self._batteryLevel,
                 'eventCount': self._eventCount,
+                'eventCountChanged': self._eventCountChanged,
+                'notifyEvent': self._notifyEvent,
+                'notifyText': self._notifyText,
                 'updated': self._updated,
-                'id': self.id}
+                'id': self.id,
+                'enableGeoFencing': self._enableGeoFencing,
+                'trustedTagId': self._trustedTagId,
+                'trustedLocationName': self._trustedLocationName,
+                'trustedLocationLat': self._trustedLocationLat,
+                'trustedLocationLon': self._trustedLocationLon,
+                'distance': self._distance,
+                'appleId': self._appleId
+                }
 
     def resolveTag(self, tag):
         value = "notFound"
@@ -226,6 +268,30 @@ class AirTag:
         self._batteryLevel = value
 
     @property
+    def eventCountChanged(self):
+        value = self._eventCountChanged
+        self._eventCountChanged = False
+        return value
+
+    @property
+    def notifyEvent(self):
+        return self._notifyEvent
+
+    @notifyEvent.setter
+    def notifyEvent(self, value):
+        self._needsSave = self._needsSave or value != self._notifyEvent
+        self._notifyEvent = value
+
+    @property
+    def notifyText(self):
+        return self._notifyText
+
+    @notifyText.setter
+    def notifyText(self, value):
+        self._needsSave = self._needsSave or value != self._notifyText
+        self._notifyText = value
+
+    @property
     def updated(self):
         return self._updated
 
@@ -237,5 +303,92 @@ class AirTag:
     def _updateBatteryLevel(self, status):
         idx = (status & 0b11000000) >> 6
         self.batteryLevel = ['full', 'medium', 'low', 'critical'][idx]
+        if self._eventCount != (status & 0b00111111):
+            self._eventCountChanged = True
         self._eventCount = (status & 0b00111111)
 
+    @property
+    def enableGeoFencing(self):
+        return self._enableGeoFencing
+
+    @enableGeoFencing.setter
+    def enableGeoFencing(self, value):
+        self._needsSave = self._needsSave or value != self._enableGeoFencing
+        self._enableGeoFencing = value
+
+    @property
+    def trustedTagId(self):
+        return self._trustedTagId
+
+    @trustedTagId.setter
+    def trustedTagId(self, value):
+        self._needsSave = self._needsSave or value != self._trustedTagId
+        self._trustedTagId = value
+
+    @property
+    def trustedLocationName(self):
+        return self._trustedLocationName
+
+    @trustedLocationName.setter
+    def trustedLocationName(self, value):
+        self._needsSave = self._needsSave or value != self._trustedLocationName
+        self._trustedLocationName = value
+
+    @property
+    def trustedLocationLat(self):
+        return self._trustedLocationLat
+
+    @trustedLocationLat.setter
+    def trustedLocationLat(self, value):
+        self._needsSave = self._needsSave or value != self._trustedLocationLat
+        self._trustedLocationLat = value
+
+    @property
+    def trustedLocationLon(self):
+        return self._trustedLocationLon
+
+    @trustedLocationLon.setter
+    def trustedLocationLon(self, value):
+        self._needsSave = self._needsSave or value != self._trustedLocationLon
+        self._trustedLocationLon = value
+
+    @property
+    def distance(self):
+        return self._distance
+
+    @distance.setter
+    def distance(self, value):
+        self._needsSave = self._needsSave or value != self._distance
+        self._distance = value
+
+    @property
+    def appleId(self):
+        return self._appleId
+
+    @appleId.setter
+    def appleId(self, value):
+        self._needsSave = self._needsSave or value != self._appleId
+        self._appleId = value
+
+    def checkGeoFencing(self, ctx):
+        if self.enableGeoFencing == 'trustLoc':
+            actDistance = calculateDistance([self.longitude, self.latitude],
+                                            [self.trustedLocationLon, self._trustedLocationLat])
+            if actDistance > self._distance:
+                return ['alert', f"Airtag {self._name} has moved too far away from {self._trustedLocationName}. "
+                                 f"Distance is {int(actDistance)}, expected was {self._distance}", actDistance]
+            return ['ok', f'Airtag {self._name} is within distance ({int(actDistance)} meters)', actDistance]
+        if self.enableGeoFencing == 'trustTag':
+            if self._trustedTagId in ctx.airtags.keys():
+                otherTag = ctx.airtags[self._trustedTagId]
+                actDistance = calculateDistance([self.longitude, self.latitude],
+                                                [otherTag.longitude, otherTag.latitude])
+                if actDistance > self._distance:
+                    return ['alert', f"Airtag <{self._name}> has moved too far away from Airtag <{otherTag.name}>. "
+                                     f"Distance is {int(actDistance)} meters, expected was {int(self._distance)} meters",
+                            actDistance]
+                return ['ok', f'Airtag {self._name} is within distance ({int(actDistance)} meters)', actDistance]
+            else:
+                return ['fail',
+                        f"Airtag {self._name}: Configuration problem, tag with id {self._trustedTagId} not found.", 0]
+        return ['N/A', f'Airtag {self._name}: geo fencing is not configured', 0]

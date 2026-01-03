@@ -62,6 +62,10 @@ function getLastLocationUpdate() {
                 console.log(jsn);
                 lastLocationUpdate = jsn.lastLocationUpdate;
                 usedReports = jsn.usedReports;
+                if(jsn.firmware) {
+                    divFw = document.getElementById("firmware");
+                    divFw.style.display = "inline";
+                }
             }
         }
     }
@@ -123,7 +127,7 @@ function listTags() {
                     console.log('Key : ' + key + ', Value : ' + jsn[key])
                     console.log(jsn[key].name)
                     var html;
-                    if (jsn[key].hasBattery) {
+                    if (String(jsn[key].hasBattery).toLowerCase() === 'true') {
                         html = document.getElementById("tmplAirTag2").innerHTML;
                     } else {
                         html = document.getElementById("tmplAirTag").innerHTML;
@@ -293,15 +297,33 @@ function editTag(id) {
                 document.getElementById("tagName").value = jsn.name;
                 document.getElementById("privKey").value = jsn.privateKey;
                 document.getElementById("advKey").value = jsn.advertisementKey;
+                document.getElementById("batStatus").checked = jsn.hasBattery;
+                document.getElementById("notifyEvent").checked = jsn.notifyEvent;
+                document.getElementById("notifyText").value = jsn.notifyText;
+                document.getElementById("distance").value = jsn.distance;
+                document.getElementById("latitude").value = "";
+                document.getElementById("longitude").value = "";
+                if (jsn.enableGeoFencing === 'disable') {
+                    document.getElementById('disable').checked = true;
+                    gfHideAll();
+                }
+                if (jsn.enableGeoFencing === 'trustLoc') {
+                    document.getElementById('trustedLocation').checked = true;
+                    document.getElementById("locName").value = jsn.trustedLocationName
+                    document.getElementById("latitude").value = jsn.latitude;
+                    document.getElementById("longitude").value = jsn.longitude;
+                    gfShowLoc();
+                }
+                if (jsn.enableGeoFencing === 'trustTag') {
+                    document.getElementById('trustedTag').checked = true;
+                    gfShowTag(jsn.trustedTagId);
+                }
                 if (jsn.hasOwnProperty("imgId")) {
                     markImg(jsn["imgId"]);
                 }
                 else {
                     markImg("airtag");
                 }
-                document.getElementById("batStatus").checked = jsn.hasBattery;
-                document.getElementById("useDNS").checked = jsn.useDNS;
-                document.getElementById("dnsId").value = jsn.dnsId;
             }
         }
     }
@@ -328,6 +350,67 @@ function generateKeys() {
                 document.getElementById("tagName").value = jsn.name;
                 document.getElementById("privKey").value = jsn.privateKey;
                 document.getElementById("advKey").value = jsn.advertisementKey;
+            }
+        }
+    }
+}
+
+function downloadFirmware() {
+    document.getElementById("divErrFirmware").style.display = "none";
+    var url = "/api"
+    var id = document.getElementById("id").value;
+    var advertisementKey = document.getElementById("advKey").value;
+    var params = { "command" : "firmware", "id": id, "advertisementKey": advertisementKey};
+    var completeUrl = url + formatParams(params)
+    console.log(completeUrl)
+    var http = new XMLHttpRequest();
+    http.open('GET', completeUrl, true);
+    http.setRequestHeader('Accept', 'application/json');
+    http.send();
+    http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+            if(this.status == 200) {
+                var jsn = JSON.parse(this.responseText)
+                console.log(jsn)
+                if (jsn.createdKey) {
+                    document.getElementById("privKey").value = jsn.privateKey;
+                    document.getElementById("advKey").value = jsn.advertisementKey;
+                }
+                if (jsn.status=="ok") {
+                    downloadFirmware2(jsn.name);
+                }
+                else {
+                    let errMsg = document.getElementById("txtErrFirmware");
+                    errMsg.innerHTML = jsn.errMsg;
+                    document.getElementById("divErrFirmware").style.display = "block";
+                }
+            }
+        }
+    }
+}
+
+function downloadFirmware2(name) {
+    document.getElementById("divErrFirmware").style.display = "none";
+    var url = "/download"
+    var params = { "name" : name};
+    var completeUrl = url + formatParams(params)
+    console.log(completeUrl)
+    var http = new XMLHttpRequest();
+    http.open('GET', completeUrl, true);
+    http.responseType = 'blob';
+    http.send();
+    http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+            if(this.status == 200) {
+                var blob = http.response;
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
             }
         }
     }
@@ -394,15 +477,11 @@ function addTag() {
     document.getElementById("rightTagEditor").style.display = 'block';
     document.getElementById("rightMap").style.display = 'none';
     document.getElementById("hasBatStatus").checked = false;
-    document.getElementById("useDNS").checked = false;
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let result = "";
-    const randomArray = new Uint8Array(6);
-    crypto.getRandomValues(randomArray);
-    randomArray.forEach((number) => {
-        result += chars[number % chars.length];
-    });
-    document.getElementByID("dnsId") = result;
+    document.getElementById("notifyEvent").checked = false;
+    document.getElementById("notifyText").value = "";
+    document.getElementById("disable").checked = false;
+    document.getElementById("distance").value = "100";
+    gfHideAll();
     markImg('airtag');
 }
 
@@ -430,11 +509,67 @@ function saveTagEdit() {
     var id = document.getElementById("id").value;
     var imgId = document.getElementById("imgId").value;
     var hasBatStatus = document.getElementById("batStatus").checked;
-    var useDNS = document.getElementById("useDNS").checked;
-    var dnsId = document.getElementById("dnsId").value;
+    var enableGeoFencing = document.querySelector('input[name = geoFencing]:checked').value;
+    var distance = document.getElementById("distance").value;
+    var trustedLocationName = document.getElementById("locName").value;
+    var latitude = document.getElementById("latitude").value;
+    var longitude = document.getElementById("longitude").value;
+    var notifyEvent = document.getElementById("notifyEvent").checked;
+    var notifyText = document.getElementById("notifyText").value;
+    var trustedTagId = "";
+    let tmp =  document.querySelector('input[name = trustedTag]:checked');
+    if (tmp) {
+        trustedTagId = tmp.value;
+    }
+
+    if (latitude && latitude.includes(', ')) {
+        var splt = latitude.split(', ');
+        latitude = splt[0];
+        longitude = splt[1];
+        document.getElementById("latitude").value = latitude;
+        document.getElementById("longitude").value = longitude;
+    }
+
+    document.getElementById("divErrLocName").style.display='none';
+    document.getElementById("divErrDistance").style.display='none';
+    document.getElementById("divErrLatitude").style.display='none';
+    document.getElementById("divErrLongitude").style.display='none';
+    document.getElementById("divErrTagId").style.display='none';
+    var validated = true;
+    if (enableGeoFencing === "trustLoc") {
+        if (!trustedLocationName) {
+            document.getElementById("divErrLocName").style.display='block';
+            validated = false;
+        }
+        if (!Number.isInteger(Number(distance)) || distance.valueOf()<100) {
+            document.getElementById("divErrDistance").style.display='block';
+            validated = false;
+        }
+        if (!isFinite(latitude)) {
+            document.getElementById("divErrLatitude").style.display='block';
+            validated = false;
+        }
+        if (!isFinite(longitude)) {
+            document.getElementById("divErrLongitude").style.display='block';
+            validated = false;
+        }
+    }
+    if (enableGeoFencing === "trustTag") {
+        if (!trustedTagId) {
+            document.getElementById("divErrTagId").style.display='block';
+            validated = false;
+        }
+    }
+    if (!validated) {
+        return;
+    }
+
     var url = "/api"
     var params = { "command" : cmd, "name": fldName, "privateKey": privKey, "advertisementKey": advKey, "id": id,
-                "imgId": imgId, 'hasBatteryStatus': hasBatStatus, 'useDNS': useDNS, 'dnsId': dnsId };
+                "imgId": imgId, 'hasBatteryStatus': hasBatStatus, 'enableGeoFencing': enableGeoFencing,
+                'trustedLocationName': trustedLocationName, 'distance': Number(distance),
+                'latitude': Number(latitude), 'longitude': Number(longitude), 'trustedTagId': trustedTagId,
+                 'notifyEvent': notifyEvent, 'notifyText': notifyText};
     var completeUrl = url + formatParams(params)
     console.log(completeUrl)
     var http = new XMLHttpRequest();
@@ -457,6 +592,11 @@ function saveTagEdit() {
 function cancelTagEdit() {
     document.getElementById("rightTagEditor").style.display = 'none';
     document.getElementById("rightMap").style.display = 'block';
+    document.getElementById("divErrLocName").style.display = 'none';
+    document.getElementById("divErrDistance").style.display='none';
+    document.getElementById("divErrLatitude").style.display='none';
+    document.getElementById("divErrLongitude").style.display='none';
+    document.getElementById("divErrTagId").style.display='none';
 }
 
 //
@@ -481,4 +621,53 @@ function tsToDateString(ts) {
     //var seconds = "0" + date.getSeconds();
     //return hours.substr(-2) + ':' + minutes.substr(-2) + ':' + seconds.substr(-2) + " " + day.substr(-2) + "." + month.substr(-2) + "." + year;
     return date.toLocaleString();
+}
+
+function gfHideAll() {
+    document.getElementById("divDistance").style.display = 'none';
+    document.getElementById("divLoc").style.display = 'none';
+    var dvTag = document.getElementById("divTag")
+    dvTag.innerHTML = '';
+    dvTag.style.display = 'none';
+}
+
+function gfShowLoc() {
+    document.getElementById("divDistance").style.display = 'block';
+    document.getElementById("divLoc").style.display = 'block';
+    var dvTag = document.getElementById("divTag")
+    dvTag.innerHTML = '';
+    dvTag.style.display = 'none';
+}
+
+function gfShowTag(tagId) {
+    document.getElementById("divDistance").style.display = 'block';
+    document.getElementById("divLoc").style.display = 'none';
+    var dvTag = document.getElementById("divTag");
+    var html = document.getElementById("tmplgfTag").innerHTML;
+    var url = "/api"
+    var params = { "command" : "listTags" };
+    var completeUrl = url + formatParams(params)
+    console.log(completeUrl)
+    var http = new XMLHttpRequest();
+    dvTag.innerHTML = "";
+    http.open('GET', completeUrl, true);
+    http.setRequestHeader('Accept', 'application/json');
+    http.send();
+    http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+            if(this.status == 200) {
+                var jsn = JSON.parse(this.responseText)
+                console.log(jsn)
+                Object.keys(jsn).forEach(function(key) {
+                    console.log('Key : ' + key + ', Value : ' + jsn[key]);
+                    console.log(jsn[key].name);
+                    dvTag.innerHTML += html.replace(/##NAME##/g, jsn[key].name).replace(/##ID##/g, jsn[key].id);
+                });
+                if (tagId) {
+                    document.getElementById(tagId).checked = true
+                }
+                dvTag.style.display = 'block';
+            }
+        }
+    }
 }

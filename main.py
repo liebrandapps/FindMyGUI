@@ -7,6 +7,7 @@ import base64
 import glob
 import json
 import logging
+import os.path
 import signal
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -161,6 +162,7 @@ class FindMyServer(BaseHTTPRequestHandler):
                       '.js': ["application/javascript", True],
                       '.css': ["text/css", True],
                       '.png': ["image/png", False],
+                      '.bin': ["application/octet-stream", False, 'attachment; filename="{}"'],
                       }
 
     def do_GET(self):
@@ -177,12 +179,20 @@ class FindMyServer(BaseHTTPRequestHandler):
             file = "/index.html" if self.path == "/" else self.path
             file = join('www', file[1:])
             ext = splitext(file)[1]
-            ct = self.contentTypeDct[ext] if ext in self.contentTypeDct.keys() else None
+            ct = None
+            cd = None
+            if ext in self.contentTypeDct.keys():
+                ct = self.contentTypeDct[ext]
+                cd = self.contentTypeDct[ext][2] if len(self.contentTypeDct[ext]) > 2 else None
             if exists(file) and ct is not None:
                 contentType = ct[0]
                 encode = ct[1]
                 self.send_response(200)
-                self.send_header("Content-type", contentType)
+                self.send_header("Content-Type", contentType)
+                if cd is not None:
+                    self.send_header("Content-Disposition", cd.format(os.path.basename(file)))
+                    fs = os.stat(file)
+                    self.send_header("Content-Length", str(fs.st_size))
                 self.end_headers()
                 with open(file, 'r' if encode else 'rb') as f:
                     data = f.read()
@@ -205,6 +215,7 @@ if __name__ == '__main__':
             "airTagSuffix": ['String', '.json'],
             "history": ["Integer", 30],
             "automaticQuery": ["Integer", 0],
+            "firmware": ['Boolean', False],
         },
         "logging": {
             "logFile": ["String", "./data/log/findMyGUI.log"],
@@ -242,7 +253,23 @@ if __name__ == '__main__':
             "markAsRead": ['Boolean', False],
             "removeOldReports": ['Boolean', False],
         },
-
+        "geofencing": {
+            "numberOfTrustedLocations": ['Integer', 0],
+            "numberOfTrustedTags": ['Integer', 0],
+            "trustedLocation_1_name": ['String', 'Home'],
+            "trustedLocation_1_latitude": ['Fload', 0.0],
+            "trustedLocation_1_longitude": ['Float', 0.0],
+            "trustedTag_1_id": ['String', ''],
+            "trustedTag_1_latitude": ['Fload', 0.0],
+            "trustedTag_1_longitude": ['Float', 0.0],
+        },
+        "firmware": {
+            "workDir": ['String', "/usr/src/app/DIYAirTagFirmware/apps/nrf51822_fw"],
+            "bin": ['String', "compiled/nrf51_firmware.bin"],
+            "patched": ['String', "compiled/nrf51_firmware_patched.bin"],
+            "mkbuild": ['String', "export NRF_MODEL=nrf51; make build"],
+            "mkpatch": ['String', 'export NRF_MODEL=nrf51; export ADV_KEY_BASE64=##ADVKEY##; make patch'],
+        }
     }
     path = join(CONFIG_DIR, CONFIG_FILE)
     if not (exists(path)):
@@ -252,6 +279,9 @@ if __name__ == '__main__':
     runAsDaemon = False
     if len(sys.argv) > 1:
         todo = sys.argv[1]
+        if todo == 'config':
+            cfg.print()
+            sys.exit(0)
         if todo in ['start', 'stop', 'restart', 'status']:
             runAsDaemon = True
             pidFile = cfg.general_pidFile

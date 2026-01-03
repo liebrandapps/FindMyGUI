@@ -46,15 +46,66 @@
                 <input type="text" id="privKey" name="privKey" size="50" style="margin-bottom:20px;"/><br>
                 <label for="advKey">Advertisement Key (Base64):</label><br>
                 <input type="text" id="advKey" name="advKey" size="50" style="margin-bottom:20px;"/><br>
-                <label for="batStatus">Transmits Battery Status</label>
-                <input type="checkbox" id="batStatus" name="batStatus"/><br>
-                <label for="useDNS">Update last position via Dynamic DNS</label>
-                <input type="checkbox" id="useDNS" name="useDNS"/><br>
-                <label for="dnsId">Dynamic DNS Prefix</label>
-                <input type="text" id="dnsId" name="dnsId" size="25" style="margin-bottom:20px;">
+                <button type="button" onclick="generateKeys();">Generate Keys</button><p>
+                <div id="firmware" style="display:none;">
+                    <button type="button" onclick="downloadFirmware();">Patch & Download Firmware</button>
+                    <div id="divErrFirmware" style="display:none">
+                        <p id="txtErrFirmware" style="color:Crimson;font-weight:bold"></p>
+                    </div>
+
+                    <br>
+                </div>
                 <br>
-                <button type="button" onclick="generateKeys();">Generate Keys</button>
-                <br><br>
+                <input type="checkbox" id="batStatus" name="batStatus"/>
+                <label for="batStatus">Transmits Battery Status</label><p>
+                <input type="checkbox" id="notifyEvent" name="notifyEvent" />
+                <label for="notifyEvent">Notifies Events</label><p>
+                <label for="notifyText">Notification Text</label>
+                <input type="text" id="notifyText" name="notifyEvent"/>
+                <br>
+                <h4>Geo Fencing</h4>
+                <input type="radio" id="disable" name="geoFencing" value="disable" onclick="gfHideAll();"/>
+                <label for="disable">Disable Geofencing</label><p>
+                <input type="radio" id="trustedLocation" name="geoFencing" value="trustLoc" onclick="gfShowLoc();"/>
+                <label for="trustedLocation">Trusted Location (geo coordinates)</label><p>
+                <input type="radio" id="trustedTag" name="geoFencing" value="trustTag" onclick="gfShowTag('');"/>
+                <label for="trustedTag">Trusted Tag</label><p>
+                <br>
+                <div id="divDistance" style="display:none;">
+                    <div id="divErrDistance" style="display:none">
+                        <p style="color:Crimson;"><b>Please enter a numeric (integer) value >= 100</b></p>
+                    </div>
+                    <label for="distance">Distance (meter):</label><br>
+                    <input type="text" id="distance" name="distance" style="margin-bottom:20px;"/>
+                    <br>
+                </div>
+                <div id="divLoc" style="display:none;">
+                    <div id="divErrLocName" style="display:none">
+                        <p style="color:Crimson;"><b>Please enter a name for the location</b></p>
+                    </div>
+                    <label for="locName">Name of Location:</label><br>
+                    <input type="text" id="locName" name="locName" style="margin-bottom:20px;"/>
+                    <br>
+                    <div id="divErrLatitude" style="display:none">
+                        <p style="color:Crimson;"><b>Please enter numeric value for latitude</b></p>
+                    </div>
+                    <label for="latitude">Latitude:</label><br>
+                    <input type="text" id="latitude" name="latitude" style="margin-bottom:20px;"/><br>
+                    <div id="divErrLongitude" style="display:none">
+                        <p style="color:Crimson;"><b>Please enter numeric value for longitude</b></p>
+                    </div>
+                    <label for="longitude">Longitude:</label><br>
+                    <input type="text" id="longitude" name="longitude" style="margin-bottom:20px;"/><br>
+                </div>
+                <div id="divErrTagId" style="display:none">
+                    <p style="color:Crimson;"><b>Please select a tag</b></p>
+                </div>
+                <div id="divTag" style="display:none;">
+                </div>
+                <br>
+
+
+               <br>
                 <input type="hidden" id="cmd"/>
                 <input type="hidden" id="id"/>
                 <input type="hidden" id="imgId"/>
@@ -74,7 +125,7 @@
                 <a>This application allows retrieval of location information for DIY AirTags. You will
                 need an Apple ID and a working Anisette Server.</a>
                 <br>
-                <a>written by Mark Liebrand 2024</a>
+                <a>written by Mark Liebrand 2025</a>
                 <br>
                 Source Code:
                 <a>Map Data from OpenStreetMap</a>
@@ -136,6 +187,9 @@
                 </table>
                 <hr>
             </div>
-
+        <div id="tmplgfTag" style="display:none">
+                <input type="radio" id="##ID##" name="trustedTag" value="##ID##"/>
+                <label for="##ID##">##NAME##</label><p>
+        </div>
     </body>
 </html>

@@ -33,6 +33,7 @@ class IMAPScheduler(threading.Thread):
                     if self.ctx.cfg.imap_removeOldReports:
                         imap.removeOldReports()
                     imap.storeMessageHtml()
+                    imap.notifyEventCount()
                     imap.logout()
             self.__wakeup.wait(self.interval)
             self.__wakeup.clear()

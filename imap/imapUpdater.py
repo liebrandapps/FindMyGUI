@@ -59,7 +59,14 @@ class IMAPUpdater:
         imgUrl = "https://github.com/liebrandapps/FindMyGUI/blob/master/www/"
         CRLF = '<p>'
         tagListHtml = ""
+        gfReport = ""
         for tag in self.ctx.airtags.values():
+            result = tag.checkGeoFencing(self.ctx)
+            if result[0] != 'N/A':
+                gfReport += result[1] + "<br>"
+        ordered = [*self.ctx.airtags.values()]
+        ordered.sort(key=lambda item: item.lastSeen, reverse=True)
+        for tag in ordered:
             name = tag.name
             longitude = tag.longitude
             latitude = tag.latitude
@@ -67,7 +74,7 @@ class IMAPUpdater:
             gl = 'https://maps.google.com/maps?q=' + str(latitude) + ',' + str(longitude)
             tagListHtml += name + CRLF
             tagListHtml += lastSeen.strftime('%Y-%m-%d %H:%M:%S') + CRLF
-            tagListHtml += gl + CRLF
+            tagListHtml += "<a href=\"" + gl + "\">" + gl + "</a>" + CRLF
             tagListHtml += CRLF
             imgId = tag.imgId
             gMapUrl += "/" + str(latitude) + "," + str(longitude)
@@ -100,8 +107,10 @@ class IMAPUpdater:
         html += bingUrl
         html += """">link</a>.
             </p>
-                
-          </body>
+            <br>"""
+        if len(gfReport) > 0:
+            html += gfReport
+        html += """  </body>
         </html>
         """
         part1 = MIMEText(text, 'plain')
@@ -118,3 +127,28 @@ class IMAPUpdater:
         for num in data[0].split():
             self.mail.store(num, '+FLAGS', '\\Deleted')
         self.mail.expunge()
+
+    def notifyEventCount(self):
+        for tag in self.ctx.airtags.values():
+            if tag.notifyEvent and tag.eventCountChanged:
+                name = tag.name
+                msg = MIMEMultipart('alternative')
+                msg['From'] = self.ctx.cfg.imap_sender
+                msg['Subject'] = f"AirTag {name} Event occured" if tag.notifyText is None or len(tag.notifyText) == 0 \
+                    else tag.notifyText
+                text = f"AirTag {name} event"
+                html = """\
+                    <html>
+                        <head>
+                        </head>
+                        <body> AirTag"""
+                html += name + """
+                        </body>
+                        </html>"""
+                part1 = MIMEText(text, 'plain')
+                part2 = MIMEText(html, 'html')
+                msg.attach(part1)
+                msg.attach(part2)
+                status, data = self.mail.append(self.ctx.cfg.imap_folder, '', imaplib.Time2Internaldate(time()), str(msg).encode('utf-8'))
+                if status == "NO":
+                    self.ctx.log.error(f"Error creating email in Mailbox: {str(data)}")

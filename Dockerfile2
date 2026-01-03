@@ -1,0 +1,36 @@
+FROM python:3
+
+WORKDIR /usr/src/app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN mkdir -p findmy
+RUN mkdir -p imap
+RUN mkdir -p www
+
+RUN apt update
+RUN apt -y install gcc-arm-none-eabi xxd libusb-1.0-0
+RUN git clone https://github.com/liebrandapps/DIYAirTagFirmware
+WORKDIR /usr/src/app/DIYAirTagFirmware
+RUN git submodule init
+RUN git submodule update
+RUN wget https://nsscprodmedia.blob.core.windows.net/prod/software-and-other-downloads/desktop-software/nrf-command-line-tools/sw/versions-10-x-x/10-24-0/nrf-command-line-tools_10.24.0_arm64.deb
+RUN dpkg -i nrf-command-line-tools_10.24.0_arm64.deb
+WORKDIR /usr/src/app/DIYAirTagFirmware/apps/nrf51822_fw
+RUN export NRF_MODEL=nrf51; make build
+WORKDIR /usr/src/app
+
+COPY main.py .
+COPY airTag.py .
+COPY api.py .
+COPY config.py .
+COPY context.py .
+COPY daemon.py .
+COPY mqtt.py .
+COPY imap/* imap/
+COPY findmy/* findmy/
+COPY www/* www/
+
+EXPOSE 8008
+CMD [ "python", "./main.py" ]
