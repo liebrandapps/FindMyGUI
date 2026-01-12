@@ -112,8 +112,7 @@ class FindMy:
                         self.retrieveLocations(False)
                 self.ctx.log.info(f'{r.status_code}: {len(res)} reports received.')
                 chunk = []
-
-        res.extend(json.loads(r.content.decode())['results'])
+                res.extend(json.loads(r.content.decode())['results'])
 
         ordered = []
         found = set()
