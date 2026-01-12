@@ -147,8 +147,9 @@ class FindMy:
                         t.updateLocation(timestamp, tag['lat'], tag['lon'], tag['status'])
                         t.appleId = self.ctx.userName
                         t.updated = True
-                found.add(tag['key'])
-                ordered.append(tag)
+                        found.add(tag['key'])
+                        ordered.append(tag)
+                        break
         self.ctx.log.info(f'{len(ordered)} reports used.')
         ordered.sort(key=lambda item: item.get('timestamp'))
         # for rep in ordered: print(rep)
